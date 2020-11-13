@@ -15,8 +15,8 @@
 #include "network.hpp"
 
 #ifdef NET_GRAPH_VIZ
-#include <gvc.h>
-#include <cgraph.h>
+#include <graphviz/gvc.h>
+#include <graphviz/cgraph.h>
 #endif
 
 namespace net{

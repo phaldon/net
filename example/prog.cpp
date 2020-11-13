@@ -4,9 +4,9 @@
 #include <random>
 #include <functional>
 #include "timer.h"
-#include "TAT.hpp"
-#include "net.hpp"
-#include "tensor_tool.hpp"
+#include <TAT/TAT.hpp>
+#include <net/net.hpp>
+#include <net/tensor_tool.hpp>
 #define str std::to_string
 #define vec std::vector<int>
 
