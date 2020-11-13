@@ -1,0 +1,6 @@
+.DS_Store
+/example/*
+!/example/*.cpp
+!/example/*.hpp
+!/example/*.h
+!/example/makefile
