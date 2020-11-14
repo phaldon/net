@@ -50,6 +50,11 @@ namespace net{
 		Tensor<T> contract(Tensor<T>& ten1,Tensor<T>& ten2,const std::set<std::pair<std::string,std::string>> & inds){
 			return Tensor<T>::contract(ten1,ten2,{inds.begin(), inds.end()});
 		}
+
+		template <typename T>
+		int zero_map(const Tensor<T> &ten){
+			return 0;
+		}
 	}
 }
 

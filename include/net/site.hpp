@@ -37,7 +37,7 @@ namespace net{
 		/**
 		 * \brief 边上的附着信息
 		 */
-		V val=V();
+		V val;
 
 		bond()=default;
 		bond(const std::string & s1,const std::string & s2,site<T,V> * s): name(s1),ind(s2),neighbor(s){};
@@ -81,7 +81,7 @@ namespace net{
 		/**
 		 * \brief 格点所附着的信息
 		 */
-		T val=T();
+		T val;
 		/**
 		 * \brief 格点所相连的边, 存储了另一测的指针等信息
 		 * \see bond

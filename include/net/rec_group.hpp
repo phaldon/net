@@ -36,12 +36,18 @@ namespace net{
 		void belong(network<rec_group<T,V>,V> &);
 		void absorb(const std::string &,absorb_type<T,V>, contract_type<T>);
 		void draw(const std::string &,const bool);
+		const T& get_val(const rec_group<T,V>&);
 
 	private:
 		network<rec_group<T,V>,V> * net;
 		T val;
 		std::set<std::string> contains;
 	};
+
+	template <typename T,typename V>
+	const T& rec_group<T,V>::get_val(const rec_group<T,V> & n){
+		return val;
+	}
 
 	template <typename T,typename V>
 	void rec_group<T,V>::belong(network<rec_group<T,V>,V> & n){

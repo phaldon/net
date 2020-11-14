@@ -33,6 +33,12 @@ int main(){
 	lat.draw(true);
 	int n=0;
 
+
+	net::network<int,int> lat_map;
+	lat_map=net::fmap<net::tensor::Tensor<double>,net::tensor::Tensor<double>,int,int>
+		(lat,net::tensor::zero_map<double>,net::tensor::zero_map<double>);
+	lat_map.draw(true);
+
 	benchmark.start("square");
 
 	net::network<net::tensor::Tensor<double>,net::tensor::Tensor<double>> lat2("square");

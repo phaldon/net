@@ -33,6 +33,9 @@ namespace net{
     * \tparam T 每个格点中附着的信息类型
     * \tparam V 每个边上附着的信息类型
     */
+    template <typename T,typename V>
+	class network;
+
 	template <typename T,typename V>
 	class network{
 	template <typename T1,typename V1>
@@ -43,6 +46,10 @@ namespace net{
 	friend std::ostream & operator<(std::ostream &, const network<T1,V1> &);
 	template <typename T1,typename V1>
 	friend std::istream & operator>(std::istream &, network<T1,V1> &);
+
+	template <typename T1,typename V1,typename T2, typename V2>
+	friend network<T2,V2> fmap(const network<T1,V1> &,std::function<T2(const T1 &)> f1,std::function<V2(const V1 &)> f2);
+
 	public:
 		//constructor
 		network()=default;
@@ -57,6 +64,9 @@ namespace net{
 		network<T,V>& operator=(network<T,V>&&)=default;
 		//destructor
 		//~network();
+
+		template <typename T1,typename V1>
+		network<T1,V1> fmap(std::function<T1(T&)>,std::function<V1(V&)>);
 
 		void add(const std::string &);
 		void add(const std::string &,const std::vector<int> &);
@@ -107,6 +117,9 @@ namespace net{
 		std::string name="";
 		std::map<std::vector<int>,std::string> name_at;
 	};
+
+	template <typename T1,typename V1,typename T2, typename V2>
+	network<T2,V2> fmap(const network<T1,V1> &,std::function<T2(const T1 &)> f1,std::function<V2(const V1 &)> f2);
 
 	std::string to_str(std::vector<int> v);
 
@@ -573,6 +586,27 @@ namespace net{
 
 		}
 		return contract_fun(ten1,ten2,ind_pairs);
+	}
+
+	template <typename T1,typename V1,typename T2, typename V2>
+	network<T2,V2> fmap(const network<T1,V1> & n,std::function<T2(const T1 &)> f1,std::function<V2(const V1 &)> f2){
+		network<T2,V2> result;
+		result.name=n.name;
+		result.name_at=n.name_at;
+		for (auto & s:n.sites){
+			const auto [its, success] = result.sites.insert({s.first,site<T2,V2>()});
+			its->second.position=s.second.position;
+			its->second.val=f1(s.second.val);
+			for (auto & b:s.second.bonds){
+				its->second.bonds[b.first]=bond<T2,V2>(b.second.name,b.second.ind,nullptr,f2(b.second.val));
+			}
+		}
+		for (auto & s:result.sites){
+			for (auto & b:s.second.bonds){
+				b.second.neighbor=&(result.sites[b.second.name]);
+			}
+		}
+		return result;
 	}
 
 	std::string to_str(std::vector<int> v){
