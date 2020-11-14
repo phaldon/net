@@ -31,6 +31,10 @@ namespace net{
 	friend std::ostream & operator<<(std::ostream &, const network<T1,V1> &);
 	template <typename T1,typename V1>
 	friend std::istream & operator>>(std::istream &, network<T1,V1> &);
+	template <typename T1,typename V1>
+	friend std::ostream & operator<(std::ostream &, const network<T1,V1> &);
+	template <typename T1,typename V1>
+	friend std::istream & operator>(std::istream &, network<T1,V1> &);
 	public:
 		//constructor
 		network()=default;
@@ -104,8 +108,8 @@ namespace net{
 		name=N%name;
 		name_at=N%name_at;
 		for(auto & s:sites){
-			for (auto & b: s.bonds){
-				b.neighbor=&(sites[b.name]);
+			for (auto & b: s.second.bonds){
+				b.second.neighbor=&(sites[b.second.name]);
 			}
 		}
 	}
@@ -116,8 +120,8 @@ namespace net{
 			name=N%name;
 			name_at=N%name_at;
 			for(auto & s:sites){
-				for (auto & b: s.bonds){
-					b.neighbor=&(sites[b.name]);
+				for (auto & b: s.second.bonds){
+					b.second.neighbor=&(sites[b.second.name]);
 				}
 			}
 		}
