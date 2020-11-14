@@ -9,13 +9,14 @@
 #include <set>
 #include <initializer_list>
 #include <stdexcept>
+#include <cstdlib>
 #include "error.hpp"
 #include "site.hpp"
 #include "network.hpp"
 
 #ifdef NET_GRAPH_VIZ
-#include <gvc.h>
-#include <cgraph.h>
+#include <graphviz/gvc.h>
+#include <graphviz/cgraph.h>
 #endif
 
 namespace net{
@@ -84,7 +85,7 @@ namespace net{
 	}
 
 	void show_fig(const std::string & fig_content,bool tmux){
-
+#ifdef __APPLE__
 		if(tmux){
 			std::cout<<"\033Ptmux;\033\033]";
 		}else{
@@ -98,7 +99,10 @@ namespace net{
 			std::cout<<"\a";
 		}
 		std::cout<<std::endl;
-
+#else
+      std::ofstream("/tmp/net_tmp.png") << fig_content;
+      std::system("gwenview /tmp/net_tmp.png || eog /tmp/net_tmp.png");
+#endif
 	}
 	#endif
 

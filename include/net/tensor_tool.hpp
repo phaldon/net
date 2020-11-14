@@ -1,7 +1,7 @@
 #ifndef TENSOR_TOOLS_H
 #define TENSOR_TOOLS_H
 
-#include "TAT.hpp"
+#include <TAT/TAT.hpp>
 #include "network.hpp"
 
 namespace net{
