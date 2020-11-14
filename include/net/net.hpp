@@ -2,6 +2,7 @@
 #define NET_H
 
 #include "network.hpp"
+#include "network_io.hpp"
 #include "network_draw.hpp"
 #include "group.hpp"
 #include "rec_group.hpp"

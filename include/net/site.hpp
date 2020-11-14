@@ -10,6 +10,10 @@ namespace net{
 
 	template <typename T,typename V>
 	class bond{
+	template <typename T1,typename V1>
+	friend std::ostream & operator<<(std::ostream &,const bond<T1,V1> &);
+	template <typename T1,typename V1>
+	friend std::istream & operator>>(std::istream &, bond<T1,V1> &);
 	public:
 		std::string name;
 		std::string ind;
@@ -24,6 +28,10 @@ namespace net{
 
 	template <typename T,typename V>
 	class site{
+	template <typename T1,typename V1>
+	friend std::ostream & operator<<(std::ostream &,const site<T1,V1> &);
+	template <typename T1,typename V1>
+	friend std::istream & operator>>(std::istream &, site<T1,V1> &);
 	public:
 		//constructor
 		site()=default;

@@ -27,6 +27,10 @@ namespace net{
 
 	template <typename T,typename V>
 	class network{
+	template <typename T1,typename V1>
+	friend std::ostream & operator<<(std::ostream &, const network<T1,V1> &);
+	template <typename T1,typename V1>
+	friend std::istream & operator>>(std::istream &, network<T1,V1> &);
 	public:
 		//constructor
 		network()=default;

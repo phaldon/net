@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <random>
 #include <functional>
 #include "timer.h"
@@ -67,6 +68,9 @@ int main(){
 	lat2.absorb("ten1_1","ten1_2",net::tensor::no_absorb<double>,net::tensor::contract<double>);
 	benchmark.stop("square");
 
+
+	std::ofstream lat_file("testout.dat", std::ios::out);
+	lat_file<<lat2;
 
 	benchmark.start("contract");
 	tot = lat2.contract(net::tensor::no_absorb<double>,net::tensor::contract<double>);
