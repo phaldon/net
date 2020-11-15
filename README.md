@@ -5,3 +5,6 @@ Net is C++ library to express and manipulate a hyper-graph with objects on its v
 * MPI (optional for parallel programming)
 * graphviz (optional for visualization)
 * [TAT](https://github.com/hzhangxyz/TAT) (optional for tensor network support)
+
+# Documentation
+https://crimestop.github.io/net/index.html
