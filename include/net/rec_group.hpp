@@ -39,9 +39,11 @@ namespace net{
 		const T& get_val(const rec_group<T,V>&);
 
 	private:
-		network<rec_group<T,V>,V> * net;
+		network<rec_group<T,V>,V> * shallow_net;
+		network<rec_group<T,V>,V> * deep_net;
 		T val;
-		std::set<std::string> contains;
+		std::set<std::string> shallow_contains;
+		std::set<std::string> deep_contains;
 	};
 
 	template <typename T,typename V>
@@ -51,27 +53,28 @@ namespace net{
 
 	template <typename T,typename V>
 	void rec_group<T,V>::belong(network<rec_group<T,V>,V> & n){
-		net=&n;
+		shallow_net=&n;
+		deep_net=&n;
 	}
 
 	template <typename T,typename V>
 	void rec_group<T,V>::absorb(const std::string & name,absorb_type<T,V> absorb_fun, contract_type<T> contract_fun){
-		net->tn_contract1(name,contains,val,absorb_fun,contract_fun);
-		contains.insert(name);
+		//shallow net: absorb
+		//deep net: deep absorb
 	}
 
 	template <typename T,typename V>
 	rec_group<T,V> contract(rec_group<T,V> & G1,rec_group<T,V> & G2,absorb_type<T,V> absorb_fun, contract_type<T> contract_fun){
-		group<T,V> G3;
-		G3.net=G1.net;
-		G3.contains=G1.contains;
-		G3.insert(G2.begin(),G2.end());
-		G3.ten=tn_contract2(G1.contains,G1.val,G2.contains,G2.val,absorb_fun,contract_fun);
+		//shallow net: contract
+		//deep net: deep contract
 	}
 
 	template<typename T,typename V>
 	void rec_group<T,V>::draw(const std::string & filename,const bool label_bond){
-		net->draw(contains,label_bond);
+		std::cout<<"For shallow network:"<<std::endl;
+		shallow_net->draw(contains,label_bond);
+		std::cout<<"For deep network:"<<std::endl;
+		deep_net->draw(contains,label_bond);
 	}
 }
 #endif
