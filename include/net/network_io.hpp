@@ -43,7 +43,7 @@ namespace net{
 	template <typename T,typename V>
 	std::istream & operator>>(std::istream & is,site<T,V> & s){
 		is>>s.bonds>>s.position>>s.val;
-		// std::cout<<"---2-----"<<std::endl<<s.val<<std::endl<<"---2-----"<<std::endl;
+		// std::cout<<"---2-----\n"<<s.val<<"\n---2-----\n";
 		return is;
 	}
 
@@ -80,14 +80,14 @@ namespace net{
 		T a;
 		V b;
 		m.clear();
-		// std::cout<<"..."<<len<<"..."<<std::endl;
+		// std::cout<<"..."<<len<<"...\n";
 		for (int i=0;i<len;++i){
 			is>>a>>b;
-			// std::cout<<"here"<<std::endl;
-			// std::cout<<'-'<<a<<'-'<<b<<'-'<<std::endl;
+			// std::cout<<"here\n";
+			// std::cout<<'-'<<a<<'-'<<b<<'-'<<"\n";
 			m[a]=b;
 		}
-		// std::cout<<"finish"<<std::endl;
+		// std::cout<<"finish\n";
 		return is;
 	}
 

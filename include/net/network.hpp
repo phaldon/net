@@ -460,7 +460,7 @@ namespace net{
 			}
 		}
 
-		//std::cout<<to_str(site2.position)<<std::endl;
+		//std::cout<<to_str(site2.position)<<"\n";
 
 		if(site2.position.size()>0) name_at.erase(site2.position);
 		sites.erase(name2);
@@ -530,7 +530,7 @@ namespace net{
 		T tot;
 		std::set<std::string> contracted;
 		for(auto s:name_at){
-			//std::cout<<s.second<<std::endl;
+			//std::cout<<s.second<<"\n";
 			tn_contract1(s.second,contracted,tot,absorb_fun,contract_fun);
 			//for(auto & i:contracted) std::cout<<i<<'\n';
 			contracted.insert(s.second);

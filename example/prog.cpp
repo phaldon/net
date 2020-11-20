@@ -44,26 +44,26 @@ int main(){
 	net::network<net::tensor::Tensor<double>,net::tensor::Tensor<double>> lat2("square");
 	for(int i=0;i<4;++i){
 		for (int j=0;j<4;++j){
-			//std::cout<<i<<j<<std::endl;
+			//std::cout<<i<<j<<"\n";
 			lat2.add("ten"+str(i)+"_"+str(j),vec({i,j}));
 			lat2.set_val("ten"+str(i)+"_"+str(j),1);
 		}
 	}
 	for(int i=0;i<4;++i){
 		for (int j=0;j<3;++j){
-			//std::cout<<i<<j<<std::endl;
+			//std::cout<<i<<j<<"\n";
 			lat2.set_bond(vec({i,j}),vec({i,j+1}));
 		}
 	}
 	for(int i=0;i<3;++i){
 		for (int j=0;j<4;++j){
-			//std::cout<<i<<j<<std::endl;
+			//std::cout<<i<<j<<"\n";
 			lat2.set_bond(vec({i,j}),vec({i+1,j}));
 		}
 	}
 
 	TAT::Tensor<double> a,b;
-	//std::ofstream("ten.dat", std::ios::out)<<a;
+	std::ofstream("ten.dat", std::ios::out)<<a;
 	std::ifstream("ten.dat", std::ios::in)>>b;
 
 	// auto test=std::bind(net::tensor::init_site_rand, _1,8,-1l,1l,std::ref(random_engine));
@@ -93,7 +93,7 @@ int main(){
 
 	for(int i=0;i<4;++i){
 		for (int j=0;j<4;++j){
-			//std::cout<<i<<"----"<<j<<std::endl;
+			//std::cout<<i<<"----"<<j<<"\n";
 			if (lat2.exist("ten"+str(i)+"_"+str(j))){
 				tnt.absorb("ten"+str(i)+"_"+str(j),net::tensor::no_absorb<double>,net::tensor::contract<double>);
 				//tnt.draw("test",true);
