@@ -8,3 +8,4 @@ docs
 !/example/*.hpp
 !/example/*.h
 !/example/makefile
+*.sublime*

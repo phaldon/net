@@ -1,12 +1,11 @@
-#ifndef NET_H
-#define NET_H
+#ifndef NET_HPP
+#define NET_HPP
 
 #include "network.hpp"
-#include "network_io.hpp"
+#include "traits.hpp"
 #include "network_bio.hpp"
-#include "network_draw.hpp"
+#include "network_io.hpp"
 #include "group.hpp"
-#include "rec_group.hpp"
 
 //pre-processor parameters:
 //NET_GRAPH_VIZ : used to render the figure of a network. installation of graphviz is required. 
