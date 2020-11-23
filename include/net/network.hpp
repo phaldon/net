@@ -76,12 +76,16 @@ namespace net{
 
 		void fope(std::function<NodeVal(const NodeVal&)>,std::function<EdgeVal(const EdgeVal&)>);
 
-		void add(const NodeKey &);
+		IterNode add(const NodeKey &);
 		void set_bond(const NodeKey &,const NodeKey &,const EdgeKey &,const EdgeKey &);
+		void set_bond(IterNode,IterNode,const EdgeKey &,const EdgeKey &);
 
 		void del(const NodeKey &);
+		void del(IterNode);
 		void del_bond(const NodeKey &,const NodeKey &);
+		void del_bond(IterNode,IterNode);
 		void del_leg(const NodeKey &,const EdgeKey &);
+		void del_leg(IterNode,const EdgeKey &);
 
 		void rename(const NodeKey &,const NodeKey &);
 
@@ -113,6 +117,7 @@ namespace net{
 		NodeVal tn_contract2(const std::set<NodeKey,typename Trait::nodekey_less> &, NodeVal&, const std::set<NodeKey,typename Trait::nodekey_less> &, NodeVal&,
 			absorb_type<NodeVal,EdgeVal,EdgeKey>, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
 
+		using IterNode = std::map<NodeKey,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less>::iterator
 	private:
 		std::map<NodeKey,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> sites;
 		std::string name="";
@@ -194,11 +199,12 @@ namespace net{
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::add(const NodeKey & name){
+	auto network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::add(const NodeKey & name){
 		auto [s1,succ1]=sites.insert(make_pair(name,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>()));
 		if(!succ1){
 			throw key_exist_error("In network.add, site "+to_string(name)+" already exists!");
 		}
+		return s1
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -212,14 +218,14 @@ namespace net{
 		del(site_itr);
 	}
 
-	// template<typename NodeVal,typename EdgeVal>
-	// void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del(decltype(sites)::iterator site_itr){
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it){
 
-	// 	for(auto & b: site_itr->second->bonds){
-	// 		b.second.neighbor->bonds.erase(b.second.ind);
-	// 	}
-	// 	sites.erase(site_itr);
-	// }
+		for(auto & b: it->second->bonds){
+			b.second.neighbor->bonds.erase(b.second.ind);
+		}
+		sites.erase(it);
+	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_bond(const NodeKey & name1,const NodeKey& name2){

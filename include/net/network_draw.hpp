@@ -6,6 +6,7 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include <string>
 #include <set>
 #include <initializer_list>
 #include <stdexcept>
