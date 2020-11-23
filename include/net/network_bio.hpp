@@ -13,6 +13,17 @@ namespace net{
 	class network;
 
 	template <typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
+	std::ostream & output_bin(std::ostream & os,const T & m){
+		return os.write(reinterpret_cast<const char*>(&m), sizeof m);
+	}
+
+	std::ostream & output_bin(std::ostream & os,const std::string & m){
+		unsigned int len=m.size();
+		output_bin(os,len);
+		return os.write(&m[0], len);
+	}
+
+	template <typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
 	std::istream & input_bin(std::istream & is,T & m){
 		return is.read(reinterpret_cast<char*>(&m), sizeof m);
 	}
@@ -53,17 +64,6 @@ namespace net{
 		Trait::edgekey_write_bin(os,b.ind);
 		Trait::edgeval_write_bin(os,b.val);
 		return os;
-	}
-
-	template <typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-	std::ostream & output_bin(std::ostream & os,const T & m){
-		return os.write(reinterpret_cast<const char*>(&m), sizeof m);
-	}
-
-	std::ostream & output_bin(std::ostream & os,const std::string & m){
-		unsigned int len=m.size();
-		output_bin(os,len);
-		return os.write(&m[0], len);
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
