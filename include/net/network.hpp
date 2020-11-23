@@ -208,18 +208,12 @@ namespace net{
 		if(site_itr == sites.end()){
 			throw key_unfound_error("In network.del, site "+to_string(name)+" is not found!");
 		}
-
-		del(site_itr);
+		for(auto & b: site_itr->second->bonds){
+			b.second.neighbor->bonds.erase(b.second.ind);
+		}
+		sites.erase(site_itr);
 	}
 
-	// template<typename NodeVal,typename EdgeVal>
-	// void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del(decltype(sites)::iterator site_itr){
-
-	// 	for(auto & b: site_itr->second->bonds){
-	// 		b.second.neighbor->bonds.erase(b.second.ind);
-	// 	}
-	// 	sites.erase(site_itr);
-	// }
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_bond(const NodeKey & name1,const NodeKey& name2){
