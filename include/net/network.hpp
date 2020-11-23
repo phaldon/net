@@ -221,7 +221,7 @@ namespace net{
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it){
 
-		for(auto & b: it->second->bonds){
+		for(auto & b: it->second.bonds){
 			b.second.neighbor->bonds.erase(b.second.ind);
 		}
 		sites.erase(it);
@@ -230,19 +230,28 @@ namespace net{
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_bond(const NodeKey & name1,const NodeKey& name2){
 
-		auto site_itr = sites.find(name1);
-		if(site_itr == sites.end()){
+		auto site_itr1 = sites.find(name1);
+		if(site_itr1 == sites.end()){
 			throw key_unfound_error("In network.del_bond, site "+to_string(name1)+" is not found!");
 		}
 
-		if(sites.count(name2)==0){
+		auto site_itr2 = sites.find(name2);
+		if(site_itr2 == sites.end()){
 			throw key_unfound_error("In network.del_bond, site "+to_string(name2)+" is not found!");
 		}
 
-		for(auto bond_itr=site_itr->second.bonds.begin(); bond_itr != site_itr->second.bonds.end(); ) {
-			if (bond_itr->second.name==name2) {
-				bond_itr->second.neighbor->bonds.erase(bond_itr->second.ind);
-				bond_itr=site_itr->second.bonds.erase(bond_itr);
+		del_bond(site_itr1,site_itr2);
+	}
+
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_bond (network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it1,
+		network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it2){
+
+		for(auto bond_itr=it1->second.bonds.begin(); bond_itr != it1->second.bonds.end(); ) {
+			if (bond_itr->second.name==it2->first) {
+				it2->second.bonds.erase(bond_itr->second.ind);
+				bond_itr=it1->second.bonds.erase(bond_itr);
 			} else {
 				++bond_itr;
 			}
@@ -258,6 +267,12 @@ namespace net{
 		}
 
 		site_itr->second.bonds.erase(ind);
+	}
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_leg(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it,const EdgeKey & ind){
+
+		it->second.bonds.erase(ind);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -277,7 +292,6 @@ namespace net{
 		if(!status.inserted)throw key_exist_error("In network.rename, site "+to_string(new_name)+" already exists!");
 	}
 
-
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::set_bond(const NodeKey & name1,const NodeKey& name2, const EdgeKey & ind1,const EdgeKey& ind2){
 		site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * site1,* site2;
@@ -296,6 +310,17 @@ namespace net{
 		auto [s2,succ2]=site2->bonds.insert(make_pair(ind2,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name1,ind1,site1)));
 		if(!succ2)throw key_exist_error("In network.set_bond, ind "+to_string(ind2)+" of site "+to_string(name2)+" already linked!");
 	}
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::set_bond(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it1,
+		network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it2, const EdgeKey & ind1,const EdgeKey& ind2){
+		
+		auto [s1,succ1]=site1->bonds.insert(make_pair(ind1,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name2,ind2,site2)));
+		if(!succ1)throw key_exist_error("In network.set_bond, ind "+to_string(ind1)+" of site "+to_string(name1)+" already linked!");
+		auto [s2,succ2]=site2->bonds.insert(make_pair(ind2,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name1,ind1,site1)));
+		if(!succ2)throw key_exist_error("In network.set_bond, ind "+to_string(ind2)+" of site "+to_string(name2)+" already linked!");
+	}
+
 
 	// template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	// void network<T,V>::set_bond(const std::string & name1,const std::string & name2){
