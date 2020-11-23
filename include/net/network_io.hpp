@@ -1,61 +1,63 @@
-#ifndef NETWORK_IO_H
-#define NETWORK_IO_H
+#ifndef NET_NETWORK_IO_HPP
+#define NET_NETWORK_IO_HPP
 
 #include <map>
 #include <vector>
 #include "site.hpp"
 #include "network.hpp"
+#include "type.hpp"
 
 namespace net{
-
-	template <typename T>
-	std::ostream & operator<<(std::ostream & os,const std::set<T> & m);
-	template <typename T>
-	std::istream & operator>>(std::istream & is,std::set<T> & m);
-	template <typename T,typename V>
-	std::ostream & operator<<(std::ostream & os,const std::map<T,V> & m);
-	template <typename T,typename V>
-	std::istream & operator>>(std::istream & is,std::map<T,V> & m);
-	template <typename T>
-	std::ostream & operator<<(std::ostream & os,const std::vector<T> & m);
-	template <typename T>
-	std::istream & operator>>(std::istream & is,std::vector<T> & m);
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
+	class network;
 
 
-	template <typename T,typename V>
-	std::ostream & operator<<(std::ostream & os,const bond<T,V> & b){
-		os<<b.name<<' '<<b.ind<<' '<<b.val;
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
+	std::ostream & operator<<(std::ostream & os,const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & n){
+		os<<n.name<<' '<<n.sites.size();
+		for(auto & i : n.sites){
+			os<<' ';
+			Trait::nodekey_write_text(os,i.first);
+			os<<' ';
+			output_site_text(os,i.second);
+		}
 		return os;
 	}
 
-	template <typename T,typename V>
-	std::istream & operator>>(std::istream & is,bond<T,V> & b){
-		is>>b.name>>b.ind>>b.val;
-		return is;
-	}
-
-	template <typename T,typename V>
-	std::ostream & operator<<(std::ostream & os,const site<T,V> & s){
-		os<<s.bonds<<' '<<s.position<<' '<<s.val;
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
+	std::ostream & output_site_text(std::ostream & os,const site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & s){
+		os<<s.bonds.size()<<' ';
+		for(auto & i : s.bonds){
+			Trait::edgekey_write_text(os,i.first);
+			os<<' ';
+			output_bond_text(os,i.second);
+			os<<' ';
+		}
+		Trait::nodeval_write_text(os,s.val);
 		return os;
 	}
 
-	template <typename T,typename V>
-	std::istream & operator>>(std::istream & is,site<T,V> & s){
-		is>>s.bonds>>s.position>>s.val;
-		// std::cout<<"---2-----"<<std::endl<<s.val<<std::endl<<"---2-----"<<std::endl;
-		return is;
-	}
-
-	template <typename T,typename V>
-	std::ostream & operator<<(std::ostream & os,const network<T,V> & n){
-		os<<n.name<<' '<<n.name_at<<' '<<n.sites;
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
+	std::ostream & output_bond_text(std::ostream & os,const bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
+		Trait::nodekey_write_text(os,b.name);
+		os<<' ';
+		Trait::edgekey_write_text(os,b.ind);
+		os<<' ';
+		Trait::edgeval_write_text(os,b.val);
 		return os;
 	}
 
-	template <typename T,typename V>
-	std::istream & operator>>(std::istream & is,network<T,V> &n){
-		is>>n.name>>n.name_at>>n.sites;
+
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
+	std::istream & operator>>(std::istream & is,network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> &n){
+		unsigned int len;
+		is>>n.name>>len;
+		NodeKey a;
+		n.sites.clear();
+		for (int i=0;i<len;++i){
+			Trait::nodekey_read_text(is,a);
+			input_site_text(is,n.sites[a]);
+		}
 		for(auto & s:n.sites){
 			for (auto & b: s.second.bonds){
 				b.second.neighbor=&(n.sites[b.second.name]);
@@ -64,74 +66,25 @@ namespace net{
 		return is;
 	}
 
-	template <typename T,typename V>
-	std::ostream & operator<<(std::ostream & os,const std::map<T,V> & m){
-		os<<m.size();
-		for(auto & i : m){
-			os<<' '<<i.first<<' '<<i.second;
-		}
-		return os;
-	}
-
-	template <typename T,typename V>
-	std::istream & operator>>(std::istream & is,std::map<T,V> & m){
-		int len;
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
+	std::istream & input_site_text(std::istream & is,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & s){
+		unsigned int len;
 		is>>len;
-		T a;
-		V b;
-		m.clear();
-		// std::cout<<"..."<<len<<"..."<<std::endl;
+		EdgeKey a;
+		s.bonds.clear();
 		for (int i=0;i<len;++i){
-			is>>a>>b;
-			// std::cout<<"here"<<std::endl;
-			// std::cout<<'-'<<a<<'-'<<b<<'-'<<std::endl;
-			m[a]=b;
+			Trait::edgekey_read_text(is,a);
+			input_bond_text(is,s.bonds[a]);
 		}
-		// std::cout<<"finish"<<std::endl;
+		Trait::nodeval_read_text(is,s.val);
 		return is;
 	}
 
-	template <typename T>
-	std::ostream & operator<<(std::ostream & os,const std::vector<T> & m){
-		os<<m.size();
-		for(auto & i : m){
-			os<<' '<<i;
-		}
-		return os;
-	}
-
-	template <typename T>
-	std::istream & operator>>(std::istream & is,std::vector<T> & m){
-		int len;
-		is>>len;
-		T a;
-		m.clear();
-		for (int i=0;i<len;++i){
-			is>>a;
-			m.push_back(a);
-		}
-		return is;
-	}
-
-	template <typename T>
-	std::ostream & operator<<(std::ostream & os,const std::set<T> & m){
-		os<<m.size();
-		for(auto & i : m){
-			os<<' '<<i;
-		}
-		return os;
-	}
-
-	template <typename T>
-	std::istream & operator>>(std::istream & is,std::set<T> & m){
-		int len;
-		is>>len;
-		T a;
-		m.clear();
-		for (int i=0;i<len;++i){
-			is>>a;
-			m.insert(a);
-		}
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
+	std::istream & input_bond_text(std::istream & is,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
+		Trait::nodekey_read_text(is,b.name);
+		Trait::edgekey_read_text(is,b.ind);
+		Trait::edgeval_read_text(is,b.val);
 		return is;
 	}
 

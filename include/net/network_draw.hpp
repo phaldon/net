@@ -1,5 +1,5 @@
-#ifndef NETWORK_DRAW_H
-#define NETWORK_DRAW_H
+#ifndef NET_NETWORK_DRAW_HPP
+#define NET_NETWORK_DRAW_HPP
 
 #include <iostream>
 #include <fstream>
@@ -58,24 +58,25 @@ bool show_mime(const std::map<std::string, std::string>& contentDict) {
 
 namespace net{
 
-	#ifdef NET_GRAPH_VIZ
+#ifdef NET_GRAPH_VIZ
 	std::string render(std::string dot_content);
-	#ifdef NET_SHOW_FIG
+#ifdef NET_SHOW_FIG
 	void show_fig(const std::string & fig_content,bool tmux);
-	#endif
-	#endif
+#endif
+#endif
 
 	static std::string base64_encode(const std::string &in);
 
-	#ifdef NET_GRAPH_VIZ
-	template<typename T,typename V>
-	void network<T,V>::draw_to_file(const std::string & filename,const bool label_bond){
+#ifdef NET_GRAPH_VIZ
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw_to_file(const std::string & filename,const bool label_bond){
 
 		draw(filename,{},label_bond);
 	}
 
-	template<typename T,typename V>
-	void network<T,V>::draw_to_file(const std::string & filename,const std::set<std::string> & contains,const bool label_bond){
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw_to_file(const std::string & filename,
+		const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
 		std::ofstream fig_file(filename, std::ios::binary);
 		if(sites.size()>0){
@@ -101,15 +102,15 @@ namespace net{
 	    return res;
 	}
 
-	#ifdef NET_SHOW_FIG
-	template<typename T,typename V>
-	void network<T,V>::draw(const bool label_bond){
+#ifdef NET_SHOW_FIG
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw(const bool label_bond){
 
 		draw({},label_bond);
 	}
 
-	template<typename T,typename V>
-	void network<T,V>::draw(const std::set<std::string> & contains,const bool label_bond){
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw(const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
 		if(sites.size()==0){
 			std::cout<<"-----------------------------------------------"<<std::endl;
@@ -145,16 +146,16 @@ namespace net{
 #endif
 #endif
 	}
-	#endif
+#endif
 
-	#endif
+#endif
 
-	template<typename T,typename V>
-	std::string network<T,V>::gviz(const std::set<std::string> & contains,const bool label_bond){
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	std::string network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::gviz(const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
 		std::stringstream dot_content;
-		int nattr;
-		std::set<std::string> drawn_sites;
+		bool fst_attr;
+		std::set<NodeKey,typename Trait::nodekey_less> drawn_sites;
 		
 		dot_content<<"digraph G {"<<std::endl;
 		dot_content<<"  scale=0.6"<<std::endl;
@@ -172,9 +173,11 @@ namespace net{
 		for(auto& s_it:sites){
 			auto & name1=s_it.first;
 			if (contains.count(name1)==1){
-				dot_content<<"  "+name1+" [ color=Red, label = \""+name1+"\", fontcolor=White, fontname=\"Monaco\"]"<<std::endl;
+				dot_content<<"  "<<Trait::nodekey_brief(name1)<<" [ color=Red, label = \""<<
+				Trait::nodekey_brief(name1)<<"\", fontcolor=White, fontname=\"Monaco\"]"<<std::endl;
 			}else{
-				dot_content<<"  "+name1+" [ color=White, label = \""+name1+"\", fontcolor=White, fontname=\"Monaco\"]"<<std::endl;
+				dot_content<<"  "<<Trait::nodekey_brief(name1)<<" [ color=White, label = \""<<
+				Trait::nodekey_brief(name1)<<"\", fontcolor=White, fontname=\"Monaco\"]"<<std::endl;
 			}
 		}
 		dot_content<<"subgraph bond {"<<std::endl;
@@ -186,24 +189,24 @@ namespace net{
 				auto & ind1=b_it.first;
 				auto & name2=b_it.second.name;
 				auto & ind2=b_it.second.ind;
-				nattr=0;
+				fst_attr=true;
 				if (drawn_sites.count(name2)==0){
-					dot_content<<"  "+name1+" -> "+name2+" [fontcolor=White, fontname=\"Monaco\",";
+					dot_content<<"  "<<Trait::nodekey_brief(name1)<<" -> "<<Trait::nodekey_brief(name2)<<" [fontcolor=White, fontname=\"Monaco\",";
 					if(label_bond){
-						dot_content<<"taillabel = \""+ind1.substr(ind1.find('.')+1)+
-						"\",headlabel =\""+ind2.substr(ind1.find('.')+1)+"\"";
-						nattr=nattr+1;
+						if (!fst_attr) dot_content<<",";
+						dot_content<<"taillabel = \""<<Trait::edgekey_brief(ind1)<<"\",headlabel =\""<<Trait::edgekey_brief(ind2)<<"\"";
+						fst_attr=false;
 					}
 					if(contains.count(name1)==1 && contains.count(name2)==1){
-						if (nattr>0) dot_content<<",";
+						if (!fst_attr) dot_content<<",";
 						dot_content<<"color=Red";
-						nattr=nattr+1;
+						fst_attr=false;
 					}else{
-						if (nattr>0) dot_content<<",";
+						if (!fst_attr) dot_content<<",";
 						dot_content<<"color=White";
-						nattr=nattr+1;
+						fst_attr=false;
 					}
-					if (nattr>0) dot_content<<",";
+					if (!fst_attr) dot_content<<",";
 					dot_content<<" len=3]"<<std::endl;
 				}
 			}
