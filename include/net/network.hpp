@@ -208,7 +208,7 @@ namespace net{
 		if(site_itr == sites.end()){
 			throw key_unfound_error("In network.del, site "+to_string(name)+" is not found!");
 		}
-		for(auto & b: site_itr->second->bonds){
+		for(auto & b: site_itr->second.bonds){
 			b.second.neighbor->bonds.erase(b.second.ind);
 		}
 		sites.erase(site_itr);
