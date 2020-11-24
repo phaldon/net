@@ -5,6 +5,7 @@ docs
 temp
 vuepress
 deploy.sh
+dev.sh
 doxybook.json
 .idea
 /example/*

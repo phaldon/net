@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include "error.hpp"
-#include "site.hpp"
+#include "node.hpp"
 #include "traits.hpp"
 
 namespace net{
@@ -23,9 +23,9 @@ namespace net{
 	template <typename NodeVal,typename EdgeKey,typename Comp>
 	using contract_type = std::function<NodeVal(NodeVal&,NodeVal&,const std::set<std::pair<EdgeKey,EdgeKey>,Comp> &)>;
 	template <typename NodeVal,typename EdgeKey>
-	using init_site_type = std::function<NodeVal(const std::vector<EdgeKey> &)>;
+	using init_node_type = std::function<NodeVal(const std::vector<EdgeKey> &)>;
 	template <typename EdgeVal,typename EdgeKey>
-	using init_bond_type = std::function<EdgeVal(const EdgeKey &,const EdgeKey &)>;
+	using init_edge_type = std::function<EdgeVal(const EdgeKey &,const EdgeKey &)>;
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey,typename EdgeKey>
 	struct default_traits;
@@ -33,7 +33,7 @@ namespace net{
     * \brief 网络是一些点和点间关联的并
     *
     * 每个格点拥有一个名字，整个网络也有自己的名字，网络可以通过格点名称寻找格点
-    * \see site, bond
+    * \see node, edge
     * \tparam T 每个格点中附着的信息类型
     * \tparam V 每个边上附着的信息类型
     */
@@ -77,10 +77,10 @@ namespace net{
 		void fope(std::function<NodeVal(const NodeVal&)>,std::function<EdgeVal(const EdgeVal&)>);
 
 		void add(const NodeKey &);
-		void set_bond(const NodeKey &,const NodeKey &,const EdgeKey &,const EdgeKey &);
+		void set_edge(const NodeKey &,const NodeKey &,const EdgeKey &,const EdgeKey &);
 
 		void del(const NodeKey &);
-		void del_bond(const NodeKey &,const NodeKey &);
+		void del_edge(const NodeKey &,const NodeKey &);
 		void del_leg(const NodeKey &,const EdgeKey &);
 
 		void rename(const NodeKey &,const NodeKey &);
@@ -104,8 +104,8 @@ namespace net{
 
 		NodeVal& operator[](const NodeKey &);
 		void set_val(const NodeKey &,const NodeVal& );
-		void init_sites(init_site_type<NodeVal,EdgeKey> );
-		void init_bonds(init_bond_type<EdgeVal,EdgeKey> );
+		void init_nodes(init_node_type<NodeVal,EdgeKey> );
+		void init_edges(init_edge_type<EdgeVal,EdgeKey> );
 		NodeVal contract(absorb_type<NodeVal,EdgeVal,EdgeKey>, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
 
 		void tn_contract1(const NodeKey &,const std::set<NodeKey,typename Trait::nodekey_less> &, NodeVal&, 
@@ -114,7 +114,7 @@ namespace net{
 			absorb_type<NodeVal,EdgeVal,EdgeKey>, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
 
 	private:
-		std::map<NodeKey,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> sites;
+		std::map<NodeKey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> nodes;
 		std::string name="";
 	};
 
@@ -126,27 +126,27 @@ namespace net{
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-		// this is not default because sites[i].bonds[j].neighbor needs redirection
+		// this is not default because nodes[i].edges[j].neighbor needs redirection
 	network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::network(const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>& N){
-		sites=N.sites;
+		nodes=N.nodes;
 		name=N.name;
-		for(auto & s:sites){
-			for (auto & b: s.second.bonds){
-				b.second.neighbor=&(sites[b.second.name]);
+		for(auto & s:nodes){
+			for (auto & b: s.second.edges){
+				b.second.neighbor=&(nodes[b.second.name]);
 			}
 		}
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-		// this is not default because sites[i].bonds[j].neighbor needs redirection
+		// this is not default because nodes[i].edges[j].neighbor needs redirection
 	network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>& network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::operator=
 		(const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>& N){
 		if(this != &N){
-			sites=N.sites;
+			nodes=N.nodes;
 			name=N.name;
-			for(auto & s:sites){
-				for (auto & b: s.second.bonds){
-					b.second.neighbor=&(sites[b.second.name]);
+			for(auto & s:nodes){
+				for (auto & b: s.second.edges){
+					b.second.neighbor=&(nodes[b.second.name]);
 				}
 			}
 		}
@@ -154,22 +154,22 @@ namespace net{
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>	
-	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::init_sites(init_site_type<NodeVal,EdgeKey> init_fun){
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::init_nodes(init_node_type<NodeVal,EdgeKey> init_fun){
 
-		for (auto& site:sites){
+		for (auto& node:nodes){
 			std::vector<EdgeKey> inds;
-			for (auto& b:site.second.bonds){
+			for (auto& b:node.second.edges){
 				inds.push_back(b.first);
 			}
-			site.second.val = init_fun(inds);
+			node.second.val = init_fun(inds);
 		}
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::init_bonds(init_bond_type<EdgeVal,EdgeKey> init_fun){
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::init_edges(init_edge_type<EdgeVal,EdgeKey> init_fun){
 
-		for (auto& site:sites){
-			for (auto& b:site.second.bonds){
+		for (auto& node:nodes){
+			for (auto& b:node.second.edges){
 				b.second.val=init_fun(b.first,b.second.ind);
 			}
 		}
@@ -180,65 +180,65 @@ namespace net{
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	NodeVal& network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::operator[](const NodeKey & name){
-		return sites[name].val;
+		return nodes[name].val;
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::set_val(const NodeKey & name,const NodeVal& value){
-		sites[name].val=value;
+		nodes[name].val=value;
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	bool network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::exist(const NodeKey & name){
-		return (sites.count(name)==1);
+		return (nodes.count(name)==1);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::add(const NodeKey & name){
-		auto [s1,succ1]=sites.insert(make_pair(name,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>()));
+		auto [s1,succ1]=nodes.insert(make_pair(name,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>()));
 		if(!succ1){
-			throw key_exist_error("In network.add, site "+to_string(name)+" already exists!");
+			throw key_exist_error("In network.add, node "+to_string(name)+" already exists!");
 		}
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del(const NodeKey & name){
 
-		auto site_itr = sites.find(name);
-		if(site_itr == sites.end()){
-			throw key_unfound_error("In network.del, site "+to_string(name)+" is not found!");
+		auto node_itr = nodes.find(name);
+		if(node_itr == nodes.end()){
+			throw key_unfound_error("In network.del, node "+to_string(name)+" is not found!");
 		}
 
-		del(site_itr);
+		del(node_itr);
 	}
 
 	// template<typename NodeVal,typename EdgeVal>
-	// void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del(decltype(sites)::iterator site_itr){
+	// void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del(decltype(nodes)::iterator node_itr){
 
-	// 	for(auto & b: site_itr->second->bonds){
-	// 		b.second.neighbor->bonds.erase(b.second.ind);
+	// 	for(auto & b: node_itr->second->edges){
+	// 		b.second.neighbor->edges.erase(b.second.ind);
 	// 	}
-	// 	sites.erase(site_itr);
+	// 	nodes.erase(node_itr);
 	// }
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_bond(const NodeKey & name1,const NodeKey& name2){
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_edge(const NodeKey & name1,const NodeKey& name2){
 
-		auto site_itr = sites.find(name1);
-		if(site_itr == sites.end()){
-			throw key_unfound_error("In network.del_bond, site "+to_string(name1)+" is not found!");
+		auto node_itr = nodes.find(name1);
+		if(node_itr == nodes.end()){
+			throw key_unfound_error("In network.del_edge, node "+to_string(name1)+" is not found!");
 		}
 
-		if(sites.count(name2)==0){
-			throw key_unfound_error("In network.del_bond, site "+to_string(name2)+" is not found!");
+		if(nodes.count(name2)==0){
+			throw key_unfound_error("In network.del_edge, node "+to_string(name2)+" is not found!");
 		}
 
-		for(auto bond_itr=site_itr->second.bonds.begin(); bond_itr != site_itr->second.bonds.end(); ) {
-			if (bond_itr->second.name==name2) {
-				bond_itr->second.neighbor->bonds.erase(bond_itr->second.ind);
-				bond_itr=site_itr->second.bonds.erase(bond_itr);
+		for(auto edge_itr=node_itr->second.edges.begin(); edge_itr != node_itr->second.edges.end(); ) {
+			if (edge_itr->second.name==name2) {
+				edge_itr->second.neighbor->edges.erase(edge_itr->second.ind);
+				edge_itr=node_itr->second.edges.erase(edge_itr);
 			} else {
-				++bond_itr;
+				++edge_itr;
 			}
 		}
 	}
@@ -246,110 +246,110 @@ namespace net{
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_leg(const NodeKey & name,const EdgeKey & ind){
 
-		auto site_itr = sites.find(name);
-		if(site_itr == sites.end()){
-			throw key_unfound_error("In network.del_ind, site "+to_string(name)+" is not found!");
+		auto node_itr = nodes.find(name);
+		if(node_itr == nodes.end()){
+			throw key_unfound_error("In network.del_ind, node "+to_string(name)+" is not found!");
 		}
 
-		site_itr->second.bonds.erase(ind);
+		node_itr->second.edges.erase(ind);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::rename(const NodeKey & old_name,const NodeKey & new_name){
 
-		auto site_handle = sites.extract(old_name);
-		if(site_handle.empty()){
-			throw key_unfound_error("In network.rename, site "+to_string(old_name)+" is not found!");
+		auto node_handle = nodes.extract(old_name);
+		if(node_handle.empty()){
+			throw key_unfound_error("In network.rename, node "+to_string(old_name)+" is not found!");
 		}
 
-		for(auto & b: site_handle.value.bonds){
-			(b.second.neighbor->bonds)[b.second.ind].name=new_name;
+		for(auto & b: node_handle.value.edges){
+			(b.second.neighbor->edges)[b.second.ind].name=new_name;
 		}
-		site_handle.key=new_name;
+		node_handle.key=new_name;
 		
-		auto status = sites.insert(std::move(site_handle));
-		if(!status.inserted)throw key_exist_error("In network.rename, site "+to_string(new_name)+" already exists!");
+		auto status = nodes.insert(std::move(node_handle));
+		if(!status.inserted)throw key_exist_error("In network.rename, node "+to_string(new_name)+" already exists!");
 	}
 
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::set_bond(const NodeKey & name1,const NodeKey& name2, const EdgeKey & ind1,const EdgeKey& ind2){
-		site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * site1,* site2;
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::set_edge(const NodeKey & name1,const NodeKey& name2, const EdgeKey & ind1,const EdgeKey& ind2){
+		node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * node1,* node2;
 		try{
-			site1=&sites.at(name1);
+			node1=&nodes.at(name1);
 		}catch(std::out_of_range err){
-			throw key_unfound_error("In network.set_bond, site "+to_string(name1)+" is not found!");
+			throw key_unfound_error("In network.set_edge, node "+to_string(name1)+" is not found!");
 		}
 		try{
-			site2=&sites.at(name2);
+			node2=&nodes.at(name2);
 		}catch(std::out_of_range err){
-			throw key_unfound_error("In network.set_bond, site at "+to_string(name2)+" is not found!");
+			throw key_unfound_error("In network.set_edge, node at "+to_string(name2)+" is not found!");
 		}
-		auto [s1,succ1]=site1->bonds.insert(make_pair(ind1,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name2,ind2,site2)));
-		if(!succ1)throw key_exist_error("In network.set_bond, ind "+to_string(ind1)+" of site "+to_string(name1)+" already linked!");
-		auto [s2,succ2]=site2->bonds.insert(make_pair(ind2,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name1,ind1,site1)));
-		if(!succ2)throw key_exist_error("In network.set_bond, ind "+to_string(ind2)+" of site "+to_string(name2)+" already linked!");
+		auto [s1,succ1]=node1->edges.insert(make_pair(ind1,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name2,ind2,node2)));
+		if(!succ1)throw key_exist_error("In network.set_edge, ind "+to_string(ind1)+" of node "+to_string(name1)+" already linked!");
+		auto [s2,succ2]=node2->edges.insert(make_pair(ind2,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name1,ind1,node1)));
+		if(!succ2)throw key_exist_error("In network.set_edge, ind "+to_string(ind2)+" of node "+to_string(name2)+" already linked!");
 	}
 
 	// template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	// void network<T,V>::set_bond(const std::string & name1,const std::string & name2){
-	// 	set_bond(name1,name2,name1+'.'+name2,name2+'.'+name1);
+	// void network<T,V>::set_edge(const std::string & name1,const std::string & name2){
+	// 	set_edge(name1,name2,name1+'.'+name2,name2+'.'+name1);
 	// }
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::absorb(const NodeKey & name1,const NodeKey & name2,
 		absorb_type<NodeVal,EdgeVal,EdgeKey> absorb_fun, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less> contract_fun){
-		if (sites.count(name1)==0){
-			throw key_unfound_error("In network.absorb, site "+to_string(name1)+" is not found!");
+		if (nodes.count(name1)==0){
+			throw key_unfound_error("In network.absorb, node "+to_string(name1)+" is not found!");
 		}
-		if (sites.count(name2)==0){
-			throw key_unfound_error("In network.absorb, site "+to_string(name2)+" is not found!");
+		if (nodes.count(name2)==0){
+			throw key_unfound_error("In network.absorb, node "+to_string(name2)+" is not found!");
 		}
-		auto & site1=sites[name1];
-		auto & site2=sites[name2];
+		auto & node1=nodes[name1];
+		auto & node2=nodes[name2];
 
 		std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> ind_pairs;
 
-		for(auto iter=site1.bonds.begin(); iter != site1.bonds.end(); ) {
+		for(auto iter=node1.edges.begin(); iter != node1.edges.end(); ) {
 			if (iter->second.name==name2) {
 				ind_pairs.insert(std::make_pair(iter->first,iter->second.ind));
-				absorb_fun(site1.val,iter->second.val,iter->first);
-				iter=site1.bonds.erase(iter);
+				absorb_fun(node1.val,iter->second.val,iter->first);
+				iter=node1.edges.erase(iter);
 			} else {
 				++iter;
 			}
 		}
 
-		site1.val=contract_fun(site1.val,site2.val,ind_pairs);
+		node1.val=contract_fun(node1.val,node2.val,ind_pairs);
 
-		for(auto & b:site2.bonds){
+		for(auto & b:node2.edges){
 			if(b.second.name != name1){
-				site1.bonds[b.first]=b.second;
-				sites[b.second.name].bonds[b.second.ind].name=name1;
+				node1.edges[b.first]=b.second;
+				nodes[b.second.name].edges[b.second.ind].name=name1;
 			}
 		}
 
-		sites.erase(name2);
+		nodes.erase(name2);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::split(const NodeKey & name1, const NodeKey & name2,const NodeKey & name3
 		,const std::set<EdgeKey,typename Trait::edgekey_less> & inds, dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less> dec_fun){
 
-		auto s1=sites.find(name1);
-		auto &b1=s1->bonds;
-		auto [s2,succ2]=sites.insert(name2);
-		auto &b2=s2->bonds;
-		auto [s3,succ3]=sites.insert(name3);
-		auto &b3=s3->bonds;
+		auto s1=nodes.find(name1);
+		auto &b1=s1->edges;
+		auto [s2,succ2]=nodes.insert(name2);
+		auto &b2=s2->edges;
+		auto [s3,succ3]=nodes.insert(name3);
+		auto &b3=s3->edges;
 
 		for(auto & b:b1){
 			if(inds.count(b.first)==0){
 				b2[b.first]=b.second;
-				sites[b.second.name].bonds[b.second.ind].name=name2;
+				nodes[b.second.name].edges[b.second.ind].name=name2;
 			}else{
 				b3[b.first]=b.second;
-				sites[b.second.name].bonds[b.second.ind].name=name3;
+				nodes[b.second.name].edges[b.second.ind].name=name3;
 			}
 		}
 
@@ -357,25 +357,25 @@ namespace net{
 		std::string ind2=name2+'.'+name3;
 		std::string ind3=name3+'.'+name2;
 		dec_fun(s1->val,s2->val,s3->val,inds,ind2,ind3,env);
-		b2[ind2]=bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name3,ind3,env);
-		b3[ind3]=bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name2,ind2,env);
+		b2[ind2]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name3,ind3,env);
+		b3[ind3]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name2,ind2,env);
 
-		sites.erase(s1);
+		nodes.erase(s1);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::split(const NodeKey & name1, const NodeKey & name2,
 		const std::set<EdgeKey,typename Trait::edgekey_less> & inds,dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less> dec_fun){
 
-		auto s1=sites.find(name1);
-		auto &b1=s1->bonds;
-		auto [s2,succ2]=sites.insert(name2);
-		auto &b2=s2->bonds;
+		auto s1=nodes.find(name1);
+		auto &b1=s1->edges;
+		auto [s2,succ2]=nodes.insert(name2);
+		auto &b2=s2->edges;
 
 		for(auto iter=b1.begin(); iter != b1.end(); ) {
 			if (inds.count(iter->first)==1) {
 				b2[iter->first]=iter->second;
-				sites[iter->second.name]=name2;
+				nodes[iter->second.name]=name2;
 				iter=b1.erase(iter);
 			} else {
 				++iter;
@@ -387,8 +387,8 @@ namespace net{
 		std::string ind1=name1+'.'+name2;
 		std::string ind2=name2+'.'+name1;
 		dec_fun(temp,s1->val,s2->val,inds,ind1,ind2,env);
-		b1[ind1]=bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name2,ind2,env);
-		b2[ind2]=bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name1,ind1,env);
+		b1[ind1]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name2,ind2,env);
+		b2[ind2]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(name1,ind1,env);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -396,7 +396,7 @@ namespace net{
 		contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less> contract_fun){
 		NodeVal tot;
 		std::set<NodeKey,typename Trait::nodekey_less> contracted;
-		for(auto s:sites){
+		for(auto s:nodes){
 			if(contracted.count(s.first)==0){
 				tn_contract1(s.first,contracted,tot,absorb_fun,contract_fun);
 				contracted.insert(s.first);
@@ -409,27 +409,27 @@ namespace net{
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::tn_contract1(const NodeKey & sname,const std::set<NodeKey,typename Trait::nodekey_less> & group, NodeVal& ten,
 		absorb_type<NodeVal,EdgeVal,EdgeKey> absorb_fun, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less> contract_fun){
 
-		site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * site;
+		node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * node;
 		try{
-			site=&sites.at(sname);
+			node=&nodes.at(sname);
 		}catch(std::out_of_range err){
-			throw key_unfound_error("In network.set_bond, site "+to_string(sname)+" is not found!");
+			throw key_unfound_error("In network.set_edge, node "+to_string(sname)+" is not found!");
 		}
 		if(group.size()==0){
-			ten=site->val;
+			ten=node->val;
 		}else{
-			auto site_t=site->val;
+			auto node_t=node->val;
 			std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> ind_pairs;
 
-			for(auto & b:site->bonds) {
+			for(auto & b:node->edges) {
 				//std::cout<<b.first<<b.second.name<<b.second.ind<<'\n';
 				if (group.count(b.second.name)==1) {
 					ind_pairs.insert(std::make_pair(b.first,b.second.ind));
-					absorb_fun(site_t,b.second.val,b.first);
+					absorb_fun(node_t,b.second.val,b.first);
 				}
 			}
 
-			ten=contract_fun(site_t,ten,ind_pairs);
+			ten=contract_fun(node_t,ten,ind_pairs);
 		}
 	}
 
@@ -446,8 +446,8 @@ namespace net{
 		}
 		std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> ind_pairs;
 		for (auto & sname:group1){
-			auto & site=sites[sname];
-			for(auto & b:site.bonds) {
+			auto & node=nodes[sname];
+			for(auto & b:node.edges) {
 				if (group2.count(b.second.name)==1) {
 					ind_pairs.insert(std::make_pair(b.first,b.second.ind));
 					absorb_fun(ten1,b.second.val,b.first);
@@ -463,17 +463,17 @@ namespace net{
 		std::function<NodeVal2(const NodeVal1 &)> f1,std::function<EdgeVal2(const EdgeVal1 &)> f2){
 		network<NodeVal2,EdgeVal2,NodeKey,EdgeKey> result;
 		result.name=n.name;
-		for (auto & s:n.sites){
-			const auto [its, success] = result.sites.insert({s.first,site<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>()});
+		for (auto & s:n.nodes){
+			const auto [its, success] = result.nodes.insert({s.first,node<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>()});
 			its->second.val=f1(s.second.val);
-			for (auto & b:s.second.bonds){
-				its->second.bonds[b.first]=bond<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>
+			for (auto & b:s.second.edges){
+				its->second.edges[b.first]=edge<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>
 					(b.second.name,b.second.ind,nullptr,f2(b.second.val));
 			}
 		}
-		for (auto & s:result.sites){
-			for (auto & b:s.second.bonds){
-				b.second.neighbor=&(result.sites[b.second.name]);
+		for (auto & s:result.nodes){
+			for (auto & b:s.second.edges){
+				b.second.neighbor=&(result.nodes[b.second.name]);
 			}
 		}
 		return result;
@@ -483,9 +483,9 @@ namespace net{
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::fope(std::function<NodeVal(const NodeVal &)> f1,
 		std::function<EdgeVal(const EdgeVal &)> f2){
-		for (auto & s:sites){
+		for (auto & s:nodes){
 			s.second.val=f1(s.second.val);
-			for (auto & b:s.second.bonds){
+			for (auto & b:s.second.edges){
 				b.second.val=f2(b.second.val);
 			}
 		}

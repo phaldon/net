@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <cstdlib>
 #include "error.hpp"
-#include "site.hpp"
+#include "node.hpp"
 #include "network.hpp"
 
 #ifdef NET_GRAPH_VIZ
@@ -79,7 +79,7 @@ namespace net{
 		const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
 		std::ofstream fig_file(filename, std::ios::binary);
-		if(sites.size()>0){
+		if(nodes.size()>0){
 			fig_file<<render(gviz(contains,label_bond));
 		}
 
@@ -112,7 +112,7 @@ namespace net{
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw(const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
-		if(sites.size()==0){
+		if(nodes.size()==0){
 			std::cout<<"-----------------------------------------------"<<std::endl;
 			std::cout<<"empty lattice"<<std::endl;
 			std::cout<<"-----------------------------------------------"<<std::endl;
@@ -155,7 +155,7 @@ namespace net{
 
 		std::stringstream dot_content;
 		bool fst_attr;
-		std::set<NodeKey,typename Trait::nodekey_less> drawn_sites;
+		std::set<NodeKey,typename Trait::nodekey_less> drawn_nodes;
 		
 		dot_content<<"digraph G {"<<std::endl;
 		dot_content<<"  scale=0.6"<<std::endl;
@@ -170,7 +170,7 @@ namespace net{
 		}
 		
 
-		for(auto& s_it:sites){
+		for(auto& s_it:nodes){
 			auto & name1=s_it.first;
 			if (contains.count(name1)==1){
 				dot_content<<"  "<<Trait::nodekey_brief(name1)<<" [ color=Red, label = \""<<
@@ -183,14 +183,14 @@ namespace net{
 		dot_content<<"subgraph bond {"<<std::endl;
 		dot_content<<"  edge[dir=none]"<<std::endl;
 
-		for(auto & s_it:sites){
+		for(auto & s_it:nodes){
 			auto & name1=s_it.first;
-			for(auto & b_it:s_it.second.bonds){
+			for(auto & b_it:s_it.second.edges){
 				auto & ind1=b_it.first;
 				auto & name2=b_it.second.name;
 				auto & ind2=b_it.second.ind;
 				fst_attr=true;
-				if (drawn_sites.count(name2)==0){
+				if (drawn_nodes.count(name2)==0){
 					dot_content<<"  "<<Trait::nodekey_brief(name1)<<" -> "<<Trait::nodekey_brief(name2)<<" [fontcolor=White, fontname=\"Monaco\",";
 					if(label_bond){
 						if (!fst_attr) dot_content<<",";
@@ -210,7 +210,7 @@ namespace net{
 					dot_content<<" len=3]"<<std::endl;
 				}
 			}
-			drawn_sites.insert(name1);
+			drawn_nodes.insert(name1);
 		}
 
 		dot_content<<"}"<<std::endl;

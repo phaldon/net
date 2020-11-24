@@ -24,11 +24,11 @@ int main(){
 	lat.add("C");
 	lat.add("D");
 	//lat.add("A");
-	lat.set_bond("A","B","A.B","B.A");
-	lat.set_bond("A","C","A.C","C.A");
-	lat.set_bond("B","C","B.C","C.B");
-	lat.set_bond("C","D","C.D","D.C");
-	//lat.set_bond("A","B","A.B","B.new");
+	lat.set_edge("A","B","A.B","B.A");
+	lat.set_edge("A","C","A.C","C.A");
+	lat.set_edge("B","C","B.C","C.B");
+	lat.set_edge("C","D","C.D","D.C");
+	//lat.set_edge("A","B","A.B","B.new");
 
 	std::cout<<lat<<std::endl;
 
@@ -53,14 +53,14 @@ int main(){
 	for(int i=0;i<4;++i){
 		for (int j=0;j<3;++j){
 			//std::cout<<i<<j<<std::endl;
-			lat2.set_bond("ten"+str(i)+"_"+str(j),"ten"+str(i)+"_"+str(j+1),
+			lat2.set_edge("ten"+str(i)+"_"+str(j),"ten"+str(i)+"_"+str(j+1),
 				"ten"+str(i)+"_"+str(j)+".ten"+str(i)+"_"+str(j+1),"ten"+str(i)+"_"+str(j+1)+".ten"+str(i)+"_"+str(j));
 		}
 	}
 	for(int i=0;i<3;++i){
 		for (int j=0;j<4;++j){
 			//std::cout<<i<<j<<std::endl;
-			lat2.set_bond("ten"+str(i)+"_"+str(j),"ten"+str(i+1)+"_"+str(j),
+			lat2.set_edge("ten"+str(i)+"_"+str(j),"ten"+str(i+1)+"_"+str(j),
 				"ten"+str(i)+"_"+str(j)+".ten"+str(i+1)+"_"+str(j),"ten"+str(i+1)+"_"+str(j)+".ten"+str(i)+"_"+str(j));
 		}
 	}
@@ -69,13 +69,13 @@ int main(){
 	//std::ofstream("ten.dat", std::ios::out)<<a;
 	//std::ifstream("ten.dat", std::ios::in)>>b;
 
-	// auto test=std::bind(net::tensor::init_site_rand, _1,8,-1l,1l,std::ref(random_engine));
+	// auto test=std::bind(net::tensor::init_node_rand, _1,8,-1l,1l,std::ref(random_engine));
 
 	// std::vector<std::string> a={"A.1","A.2"};
 
 	// net::tensor::Tensor<double> testt=test(a);
 
-	lat2.init_sites(std::bind(net::tensor::init_site_rand<net::stdEdgeKey>, _1,8,-1.,1.,std::ref(random_engine)));
+	lat2.init_nodes(std::bind(net::tensor::init_node_rand<net::stdEdgeKey>, _1,8,-1.,1.,std::ref(random_engine)));
 
 	lat2.absorb("ten1_1","ten1_2",net::tensor::no_absorb<double>,net::tensor::contract<double>);
 	benchmark.stop("square");

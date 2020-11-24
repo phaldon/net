@@ -18,7 +18,7 @@ namespace net{
 		using TensorNetworkNoEnv=network<Tensor<T,EdgeKey>,std::monostate,SiteKey,EdgeKey,default_traits<Tensor<T,EdgeKey>,Tensor<T,EdgeKey>,SiteKey,EdgeKey>>;
 
 		template <typename EdgeKey=stdEdgeKey>
-		Tensor<double,EdgeKey> init_site_rand(const std::vector<EdgeKey> & str_inds,
+		Tensor<double,EdgeKey> init_node_rand(const std::vector<EdgeKey> & str_inds,
 			const unsigned int D,const double min,const double max,std::default_random_engine & R){
 
 			auto distribution = std::uniform_real_distribution<double>(min,max);
@@ -41,7 +41,7 @@ namespace net{
 		}
 
 		template<typename T,typename EdgeKey=stdEdgeKey>
-		Tensor<T,EdgeKey> init_bond_one(const unsigned int D, const EdgeKey & edge1, const EdgeKey & edge2){
+		Tensor<T,EdgeKey> init_edge_one(const unsigned int D, const EdgeKey & edge1, const EdgeKey & edge2){
 			Tensor<T,EdgeKey> result({edge1,edge2},{D,D});
 			result.zero();
 			for(int i=0;i<D;++i){
