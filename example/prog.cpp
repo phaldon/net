@@ -45,7 +45,7 @@ int main(){
 	net::tensor::TensorNetworkEnv<double> lat2("square");
 	for(int i=0;i<4;++i){
 		for (int j=0;j<4;++j){
-			//std::cout<<i<<j<<std::endl;
+			//std::cout<<i<<j<<"\n";
 			lat2.add("ten"+str(i)+"_"+str(j));
 			lat2.set_val("ten"+str(i)+"_"+str(j),1);
 		}
@@ -59,7 +59,6 @@ int main(){
 	}
 	for(int i=0;i<3;++i){
 		for (int j=0;j<4;++j){
-			//std::cout<<i<<j<<std::endl;
 			lat2.set_edge("ten"+str(i)+"_"+str(j),"ten"+str(i+1)+"_"+str(j),
 				"ten"+str(i)+"_"+str(j)+".ten"+str(i+1)+"_"+str(j),"ten"+str(i+1)+"_"+str(j)+".ten"+str(i)+"_"+str(j));
 		}
@@ -96,7 +95,7 @@ int main(){
 
 	for(int i=0;i<4;++i){
 		for (int j=0;j<4;++j){
-			//std::cout<<i<<"----"<<j<<std::endl;
+			//std::cout<<i<<"----"<<j<<"\n";
 			if (lat2.exist("ten"+str(i)+"_"+str(j))){
 				tnt.absorb("ten"+str(i)+"_"+str(j),net::tensor::no_absorb<double>,net::tensor::contract<double>);
 				//tnt.draw("test",true);
