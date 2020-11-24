@@ -4,6 +4,8 @@ build
 docs
 temp
 vuepress
+deploy.sh
+doxybook.json
 .idea
 /example/*
 !/example/*.cpp
