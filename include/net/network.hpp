@@ -87,9 +87,9 @@ namespace net{
 
 		void absorb(const NodeKey &,const NodeKey &,absorb_type<NodeVal,EdgeVal,EdgeKey>,
 			contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
-		void split(const NodeKey &,const NodeKey &,const NodeKey &, const std::set<EdgeKey,typename Trait::edgekey_less> &,
+		void split(const NodeKey &,const NodeKey &,const NodeKey &, const std::set<EdgeKey,typename Trait::edgekey_less> &, const EdgeKey &, const EdgeKey &,
 			dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less>);
-		void split(const NodeKey &,const NodeKey &, const std::set<EdgeKey,typename Trait::edgekey_less> &,
+		void split(const NodeKey &,const NodeKey &, const std::set<EdgeKey,typename Trait::edgekey_less> &, const EdgeKey &, const EdgeKey &,
 			dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less>);
 	#ifdef NET_GRAPH_VIZ
 		void draw_to_file(const std::string &,const bool);
@@ -330,7 +330,8 @@ namespace net{
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::split(const NodeKey & nodekey1, const NodeKey & nodekey2,const NodeKey & nodekey3
-		,const std::set<EdgeKey,typename Trait::edgekey_less> & inds, dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less> dec_fun){
+		,const std::set<EdgeKey,typename Trait::edgekey_less> & inds, const EdgeKey & ind2, const EdgeKey & ind3,
+		dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less> dec_fun){
 
 		auto s1=nodes.find(nodekey1);
 		auto &b1=s1->edges;
@@ -350,8 +351,6 @@ namespace net{
 		}
 
 		EdgeVal env;
-		std::string ind2=nodekey2+'.'+nodekey3;
-		std::string ind3=nodekey3+'.'+nodekey2;
 		dec_fun(s1->val,s2->val,s3->val,inds,ind2,ind3,env);
 		b2[ind2]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(nodekey3,ind3,env);
 		b3[ind3]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(nodekey2,ind2,env);
@@ -361,7 +360,8 @@ namespace net{
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::split(const NodeKey & nodekey1, const NodeKey & nodekey2,
-		const std::set<EdgeKey,typename Trait::edgekey_less> & inds,dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less> dec_fun){
+		const std::set<EdgeKey,typename Trait::edgekey_less> & inds, const EdgeKey & ind1, const EdgeKey & ind2,
+		dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less> dec_fun){
 
 		auto s1=nodes.find(nodekey1);
 		auto &b1=s1->edges;
@@ -380,8 +380,6 @@ namespace net{
 
 		auto temp=s1->val;
 		EdgeVal env;
-		std::string ind1=nodekey1+'.'+nodekey2;
-		std::string ind2=nodekey2+'.'+nodekey1;
 		dec_fun(temp,s1->val,s2->val,inds,ind1,ind2,env);
 		b1[ind1]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(nodekey2,ind2,env);
 		b2[ind2]=edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(nodekey1,ind1,env);
