@@ -12,15 +12,17 @@
 #include <stdexcept>
 #include <cstdlib>
 #include "error.hpp"
-#include "site.hpp"
+#include "node.hpp"
 #include "network.hpp"
 
 #ifdef NET_GRAPH_VIZ
 #include <graphviz/gvc.h>
 #include <graphviz/cgraph.h>
-#endif
 
 #ifdef NET_SHOW_FIG
+#ifdef __APPLE_
+// do nothing, iterm2 support graph
+#else
 #ifdef __CLING__
 #include <unistd.h>
 #include <map>
@@ -54,6 +56,10 @@ bool show_mime(const std::map<std::string, std::string>& contentDict) {
   }
   return true;
 }
+#else
+#include <cstdlib>
+#endif
+#endif
 #endif
 #endif
 
@@ -80,7 +86,7 @@ namespace net{
 		const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
 		std::ofstream fig_file(filename, std::ios::binary);
-		if(sites.size()>0){
+		if(nodes.size()>0){
 			fig_file<<render(gviz(contains,label_bond));
 		}
 
@@ -113,10 +119,10 @@ namespace net{
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw(const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
-		if(sites.size()==0){
-			std::cout<<"-----------------------------------------------"<<std::endl;
-			std::cout<<"empty lattice"<<std::endl;
-			std::cout<<"-----------------------------------------------"<<std::endl;
+		if(nodes.size()==0){
+			std::cout<<"-----------------------------------------------\n";
+			std::cout<<"empty lattice\n";
+			std::cout<<"-----------------------------------------------\n";
 		}else{
 			show_fig(render(gviz(contains,label_bond)),false);
 		}
@@ -137,13 +143,15 @@ namespace net{
 		}else{
 			std::cout<<"\a";
 		}
-		std::cout<<std::endl;
-
+		std::cout<<"\n";
+		std::cout<<"Paused. Please press enter to continue.\n";
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 #else
 #ifdef __CLING__
-      show_mime({{"text/html","<img style='background-color:black;' src='data:image/png;base64, "+base64_encode(fig_content)+"'></img>"}});
+      show_mime({{"text/html","<img src='data:image/png;base64, "+base64_encode(fig_content)+"'></img>"}});
 #else
-      std::cerr << "Cannot Show Image\n";
+      std::ofstream("/tmp/net_tmp.png") << fig_content;
+      std::system("gwenview /tmp/net_tmp.png || eog /tmp/net_tmp.png");
 #endif
 #endif
 	}
@@ -156,49 +164,49 @@ namespace net{
 
 		std::stringstream dot_content;
 		bool fst_attr;
-		std::set<NodeKey,typename Trait::nodekey_less> drawn_sites;
+		std::set<NodeKey,typename Trait::nodekey_less> drawn_nodes;
 		
-		dot_content<<"digraph G {"<<std::endl;
-		dot_content<<"  scale=0.6"<<std::endl;
-		dot_content<<"  dpi=160"<<std::endl;
-		dot_content<<"  bgcolor=\"transparent\""<<std::endl;
-		dot_content<<"  fontcolor=White"<<std::endl;
-		dot_content<<"  fontname=\"Monaco\""<<std::endl;
+		dot_content<<"digraph G {\n";
+		dot_content<<"  scale=0.6\n";
+		dot_content<<"  dpi=160\n";
+		dot_content<<"  bgcolor=\"transparent\"\n";
+		dot_content<<"  fontcolor=White\n";
+		dot_content<<"  fontname=\"Monaco\"\n";
 		if(name==""){
-			dot_content<<"  label = \"figure of network\""<<std::endl;
+			dot_content<<"  label = \"figure of network\"\n";
 		}else{
-			dot_content<<"  label = \"figure of "+name+"\""<<std::endl;
+			dot_content<<"  label = \"figure of "+name+"\"\n";
 		}
 		
 
-		for(auto& s_it:sites){
-			auto & name1=s_it.first;
-			if (contains.count(name1)==1){
-				dot_content<<"  "<<Trait::nodekey_brief(name1)<<" [ color=Red, label = \""<<
-				Trait::nodekey_brief(name1)<<"\", fontcolor=White, fontname=\"Monaco\"]"<<std::endl;
+		for(auto& s_it:nodes){
+			auto & nodekey1=s_it.first;
+			if (contains.count(nodekey1)==1){
+				dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" [ color=Red, label = \""<<
+				Trait::nodekey_brief(nodekey1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
 			}else{
-				dot_content<<"  "<<Trait::nodekey_brief(name1)<<" [ color=White, label = \""<<
-				Trait::nodekey_brief(name1)<<"\", fontcolor=White, fontname=\"Monaco\"]"<<std::endl;
+				dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" [ color=White, label = \""<<
+				Trait::nodekey_brief(nodekey1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
 			}
 		}
-		dot_content<<"subgraph bond {"<<std::endl;
-		dot_content<<"  edge[dir=none]"<<std::endl;
+		dot_content<<"subgraph bond {\n";
+		dot_content<<"  edge[dir=none]\n";
 
-		for(auto & s_it:sites){
-			auto & name1=s_it.first;
-			for(auto & b_it:s_it.second.bonds){
+		for(auto & s_it:nodes){
+			auto & nodekey1=s_it.first;
+			for(auto & b_it:s_it.second.edges){
 				auto & ind1=b_it.first;
-				auto & name2=b_it.second.name;
+				auto & nodekey2=b_it.second.nbkey;
 				auto & ind2=b_it.second.ind;
 				fst_attr=true;
-				if (drawn_sites.count(name2)==0){
-					dot_content<<"  "<<Trait::nodekey_brief(name1)<<" -> "<<Trait::nodekey_brief(name2)<<" [fontcolor=White, fontname=\"Monaco\",";
+				if (drawn_nodes.count(nodekey2)==0){
+					dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" -> "<<Trait::nodekey_brief(nodekey2)<<" [fontcolor=White, fontname=\"Monaco\",";
 					if(label_bond){
 						if (!fst_attr) dot_content<<",";
 						dot_content<<"taillabel = \""<<Trait::edgekey_brief(ind1)<<"\",headlabel =\""<<Trait::edgekey_brief(ind2)<<"\"";
 						fst_attr=false;
 					}
-					if(contains.count(name1)==1 && contains.count(name2)==1){
+					if(contains.count(nodekey1)==1 && contains.count(nodekey2)==1){
 						if (!fst_attr) dot_content<<",";
 						dot_content<<"color=Red";
 						fst_attr=false;
@@ -208,14 +216,14 @@ namespace net{
 						fst_attr=false;
 					}
 					if (!fst_attr) dot_content<<",";
-					dot_content<<" len=3]"<<std::endl;
+					dot_content<<" len=3]\n";
 				}
 			}
-			drawn_sites.insert(name1);
+			drawn_nodes.insert(nodekey1);
 		}
 
-		dot_content<<"}"<<std::endl;
-		dot_content<<"}"<<std::endl;
+		dot_content<<"}\n";
+		dot_content<<"}\n";
 		return dot_content.str();
 
 	}

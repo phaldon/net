@@ -67,7 +67,7 @@ void timer::zero_out(){
 
 void timer::print(){
 	std::chrono::duration<double> diff;
-	std::cout << ' '<<std::endl << "===================="<<std::endl;
+	std::cout << " \n====================\n";
 	for(auto & rec:records){
 		std::cout << rec.first<<"  ";
 		if(rec.second.started){
@@ -75,8 +75,8 @@ void timer::print(){
 		}else{
 			diff=rec.second.cumu_time;
 		}
-		std::cout << diff.count()<<'s'<<std::endl;
+		std::cout << diff.count()<<"s\n";
 	}
-	std::cout << "===================="<<std::endl<< ' '<<std::endl ;
+	std::cout << "====================\n \n";
 
 }

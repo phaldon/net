@@ -3,7 +3,7 @@
 
 #include <map>
 #include <vector>
-#include "site.hpp"
+#include "node.hpp"
 #include "network.hpp"
 #include "type.hpp"
 
@@ -14,23 +14,23 @@ namespace net{
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	std::ostream & operator<<(std::ostream & os,const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & n){
-		os<<n.name<<' '<<n.sites.size();
-		for(auto & i : n.sites){
+		os<<n.name<<' '<<n.nodes.size();
+		for(auto & i : n.nodes){
 			os<<' ';
 			Trait::nodekey_write_text(os,i.first);
 			os<<' ';
-			output_site_text(os,i.second);
+			output_node_text(os,i.second);
 		}
 		return os;
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
-	std::ostream & output_site_text(std::ostream & os,const site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & s){
-		os<<s.bonds.size()<<' ';
-		for(auto & i : s.bonds){
+	std::ostream & output_node_text(std::ostream & os,const node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & s){
+		os<<s.edges.size()<<' ';
+		for(auto & i : s.edges){
 			Trait::edgekey_write_text(os,i.first);
 			os<<' ';
-			output_bond_text(os,i.second);
+			output_edge_text(os,i.second);
 			os<<' ';
 		}
 		Trait::nodeval_write_text(os,s.val);
@@ -38,8 +38,8 @@ namespace net{
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
-	std::ostream & output_bond_text(std::ostream & os,const bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
-		Trait::nodekey_write_text(os,b.name);
+	std::ostream & output_edge_text(std::ostream & os,const edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
+		Trait::nodekey_write_text(os,b.nbkey);
 		os<<' ';
 		Trait::edgekey_write_text(os,b.ind);
 		os<<' ';
@@ -53,36 +53,36 @@ namespace net{
 		unsigned int len;
 		is>>n.name>>len;
 		NodeKey a;
-		n.sites.clear();
+		n.nodes.clear();
 		for (int i=0;i<len;++i){
 			Trait::nodekey_read_text(is,a);
-			input_site_text(is,n.sites[a]);
+			input_node_text(is,n.nodes[a]);
 		}
-		for(auto & s:n.sites){
-			for (auto & b: s.second.bonds){
-				b.second.neighbor=&(n.sites[b.second.name]);
+		for(auto & s:n.nodes){
+			for (auto & b: s.second.edges){
+				b.second.neighbor=&(n.nodes[b.second.name]);
 			}
 		}
 		return is;
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
-	std::istream & input_site_text(std::istream & is,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & s){
+	std::istream & input_node_text(std::istream & is,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & s){
 		unsigned int len;
 		is>>len;
 		EdgeKey a;
-		s.bonds.clear();
+		s.edges.clear();
 		for (int i=0;i<len;++i){
 			Trait::edgekey_read_text(is,a);
-			input_bond_text(is,s.bonds[a]);
+			input_edge_text(is,s.edges[a]);
 		}
 		Trait::nodeval_read_text(is,s.val);
 		return is;
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
-	std::istream & input_bond_text(std::istream & is,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
-		Trait::nodekey_read_text(is,b.name);
+	std::istream & input_edge_text(std::istream & is,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
+		Trait::nodekey_read_text(is,b.nbkey);
 		Trait::edgekey_read_text(is,b.ind);
 		Trait::edgeval_read_text(is,b.val);
 		return is;

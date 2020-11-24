@@ -2,6 +2,12 @@
 TAT
 build
 docs
+temp
+vuepress
+deploy.sh
+dev.sh
+doxybook.json
+index.md
 .idea
 /example/*
 !/example/*.cpp
