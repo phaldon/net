@@ -118,7 +118,7 @@ namespace net{
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw(const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
 
-		if(sites.size()==0){
+		if(nodes.size()==0){
 			std::cout<<"-----------------------------------------------\n";
 			std::cout<<"empty lattice\n";
 			std::cout<<"-----------------------------------------------\n";
@@ -143,7 +143,8 @@ namespace net{
 			std::cout<<"\a";
 		}
 		std::cout<<"\n";
-      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		std::cout<<"Paused. Please press enter to continue.\n";
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 #else
 #ifdef __CLING__
       show_mime({{"text/html","<img src='data:image/png;base64, "+base64_encode(fig_content)+"'></img>"}});
@@ -178,33 +179,33 @@ namespace net{
 		
 
 		for(auto& s_it:nodes){
-			auto & name1=s_it.first;
-			if (contains.count(name1)==1){
-				dot_content<<"  "<<Trait::nodekey_brief(name1)<<" [ color=Red, label = \""<<
-				Trait::nodekey_brief(name1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
+			auto & nodekey1=s_it.first;
+			if (contains.count(nodekey1)==1){
+				dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" [ color=Red, label = \""<<
+				Trait::nodekey_brief(nodekey1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
 			}else{
-				dot_content<<"  "<<Trait::nodekey_brief(name1)<<" [ color=White, label = \""<<
-				Trait::nodekey_brief(name1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
+				dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" [ color=White, label = \""<<
+				Trait::nodekey_brief(nodekey1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
 			}
 		}
 		dot_content<<"subgraph bond {\n";
 		dot_content<<"  edge[dir=none]\n";
 
 		for(auto & s_it:nodes){
-			auto & name1=s_it.first;
+			auto & nodekey1=s_it.first;
 			for(auto & b_it:s_it.second.edges){
 				auto & ind1=b_it.first;
-				auto & name2=b_it.second.name;
+				auto & nodekey2=b_it.second.nbkey;
 				auto & ind2=b_it.second.ind;
 				fst_attr=true;
-				if (drawn_nodes.count(name2)==0){
-					dot_content<<"  "<<Trait::nodekey_brief(name1)<<" -> "<<Trait::nodekey_brief(name2)<<" [fontcolor=White, fontname=\"Monaco\",";
+				if (drawn_nodes.count(nodekey2)==0){
+					dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" -> "<<Trait::nodekey_brief(nodekey2)<<" [fontcolor=White, fontname=\"Monaco\",";
 					if(label_bond){
 						if (!fst_attr) dot_content<<",";
 						dot_content<<"taillabel = \""<<Trait::edgekey_brief(ind1)<<"\",headlabel =\""<<Trait::edgekey_brief(ind2)<<"\"";
 						fst_attr=false;
 					}
-					if(contains.count(name1)==1 && contains.count(name2)==1){
+					if(contains.count(nodekey1)==1 && contains.count(nodekey2)==1){
 						if (!fst_attr) dot_content<<",";
 						dot_content<<"color=Red";
 						fst_attr=false;
@@ -217,7 +218,7 @@ namespace net{
 					dot_content<<" len=3]\n";
 				}
 			}
-			drawn_nodes.insert(name1);
+			drawn_nodes.insert(nodekey1);
 		}
 
 		dot_content<<"}\n";

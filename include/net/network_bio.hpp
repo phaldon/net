@@ -60,7 +60,7 @@ namespace net{
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	std::ostream & output_edge_bin(std::ostream & os,const edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
-		Trait::nodekey_write_bin(os,b.name);
+		Trait::nodekey_write_bin(os,b.nbkey);
 		Trait::edgekey_write_bin(os,b.ind);
 		Trait::edgeval_write_bin(os,b.val);
 		return os;
@@ -101,7 +101,7 @@ namespace net{
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	std::istream & input_edge_bin(std::istream & is,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
-		Trait::nodekey_read_bin(is,b.name);
+		Trait::nodekey_read_bin(is,b.nbkey);
 		Trait::edgekey_read_bin(is,b.ind);
 		Trait::edgeval_read_bin(is,b.val);
 		return is;

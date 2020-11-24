@@ -39,7 +39,7 @@ namespace net{
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	std::ostream & output_edge_text(std::ostream & os,const edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
-		Trait::nodekey_write_text(os,b.name);
+		Trait::nodekey_write_text(os,b.nbkey);
 		os<<' ';
 		Trait::edgekey_write_text(os,b.ind);
 		os<<' ';
@@ -82,7 +82,7 @@ namespace net{
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	std::istream & input_edge_text(std::istream & is,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
-		Trait::nodekey_read_text(is,b.name);
+		Trait::nodekey_read_text(is,b.nbkey);
 		Trait::edgekey_read_text(is,b.ind);
 		Trait::edgeval_read_text(is,b.val);
 		return is;

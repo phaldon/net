@@ -57,10 +57,10 @@ namespace net{
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey,typename Trait>
-	void group<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::absorb(const NodeKey & name,absorb_type<NodeVal,EdgeVal,EdgeKey> absorb_fun,
+	void group<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::absorb(const NodeKey & key,absorb_type<NodeVal,EdgeVal,EdgeKey> absorb_fun,
 		contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less> contract_fun){
-		net->tn_contract1(name,contains,val,absorb_fun,contract_fun);
-		contains.insert(name);
+		net->tn_contract1(key,contains,val,absorb_fun,contract_fun);
+		contains.insert(key);
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey,typename Trait>
