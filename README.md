@@ -1,5 +1,5 @@
 # Net
-Net is C++ library to express and manipulate a hyper-graph with objects on its vertices and hyper-edges.
+Net is C++ library for dynamic Networks of EveryThing. It was originally designed to be a tensor network library. Later it evolves into a library that expresses and manipulates hyper-graphs with objects of any type on nodes and hyper-edges.
 ## Prerequisite
 * c++ compiler with c++17 support(such as gcc7+)
 * graphviz (optional for visualization)

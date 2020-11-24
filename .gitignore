@@ -3,6 +3,7 @@ TAT
 build
 docs
 temp
+images
 vuepress
 deploy.sh
 dev.sh
