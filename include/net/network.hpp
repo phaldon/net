@@ -15,15 +15,34 @@
 
 namespace net{
 
+	/**
+	* \brief 格点的分解函数的类型
+	*/
 	template <typename NodeVal,typename EdgeVal,typename EdgeKey,typename Comp>
 	using dec_type = std::function<void(NodeVal&,NodeVal&,NodeVal&,
 		const std::set<EdgeKey,Comp> &,const EdgeKey & ,const EdgeKey & ,EdgeVal&)>;
+
+	/**
+	* \brief 格点的吸收函数的类型
+	*/
 	template <typename NodeVal,typename EdgeVal,typename EdgeKey>
 	using absorb_type = std::function<void(NodeVal&,EdgeVal&,const EdgeKey &)>;
+
+	/**
+	* \brief 格点的缩并函数的类型
+	*/
 	template <typename NodeVal,typename EdgeKey,typename Comp>
 	using contract_type = std::function<NodeVal(NodeVal&,NodeVal&,const std::set<std::pair<EdgeKey,EdgeKey>,Comp> &)>;
+
+	/**
+	* \brief 格点信息的初始化函数的类型
+	*/
 	template <typename NodeVal,typename EdgeKey>
 	using init_node_type = std::function<NodeVal(const std::vector<EdgeKey> &)>;
+
+	/**
+	* \brief 边信息的初始化函数的类型
+	*/
 	template <typename EdgeVal,typename EdgeKey>
 	using init_edge_type = std::function<EdgeVal(const EdgeKey &,const EdgeKey &)>;
 
@@ -34,8 +53,11 @@ namespace net{
     *
     * 每个格点拥有一个名字，整个网络也有自己的名字，网络可以通过格点名称寻找格点
     * \see node, edge
-    * \tparam T 每个格点中附着的信息类型
-    * \tparam V 每个边上附着的信息类型
+    * \tparam NodeVal 每个格点中附着的信息类型
+    * \tparam EdgeVal 每个边上附着的信息类型
+    * \tparam NodeKey 格点名字的类型
+    * \tparam EdgeKey 边的名字的类型
+    * \tparam Trait 以上类型的特征，包括输入输出和比较 
     */
 
 
@@ -43,18 +65,33 @@ namespace net{
 		typename Trait = default_traits<NodeVal,EdgeVal,NodeKey,EdgeKey> >
 	class network{
 
+	/**
+	* \brief 网络的字符串输出
+	*/
 	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
 	friend std::ostream & operator<<(std::ostream &, const network<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 
+	/**
+	* \brief 网络的字符串输入
+	*/
 	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
 	friend std::istream & operator>>(std::istream &, network<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 
+	/**
+	* \brief 网络的二进制输出
+	*/
 	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
 	friend std::ostream & operator<(std::ostream &, const network<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 
+	/**
+	* \brief 网络的二进制输出
+	*/
 	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
 	friend std::istream & operator>(std::istream &, network<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 
+	/**
+	* \brief 利用格点上的信息的函数和边上信息的函数从一个网络得到另一个网络
+	*/
 	template<typename NodeVal1,typename EdgeVal1,typename NodeVal2,typename EdgeVal2, typename NodeKey1, typename EdgeKey1, typename Trait1>
 	friend network<NodeVal2,EdgeVal2,NodeKey1,EdgeKey1,Trait1> fmap(const network<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> & n,
 		std::function<NodeVal2(const NodeVal1 &)> f1,std::function<EdgeVal2(const EdgeVal1 &)> f2);
@@ -62,7 +99,7 @@ namespace net{
 	public:
 		//constructor
 		network()=default;
-		network(const std::string &);
+		network(const std::string & s)name(s){};
 		//copy constructor
 		network(const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>&);
 		//copy assignment
@@ -74,47 +111,122 @@ namespace net{
 		//destructor
 		//~network();
 
+		/**
+		* \brief 对每个格点上的信息做变换
+		*/
 		void fope(std::function<NodeVal(const NodeVal&)>,std::function<EdgeVal(const EdgeVal&)>);
 
+		/**
+		* \brief 加一个格点
+		*/
 		void add(const NodeKey &);
+		/**
+		* \brief 加一条边
+		*/
 		void set_edge(const NodeKey &,const NodeKey &,const EdgeKey &,const EdgeKey &);
 
+		/**
+		* \brief 删除一个格点
+		*/
 		void del(const NodeKey &);
+		/**
+		* \brief 删除两个格点之间的边
+		*/
 		void del_edge(const NodeKey &,const NodeKey &);
+		/**
+		* \brief 删除一个腿连着的边
+		*/
 		void del_leg(const NodeKey &,const EdgeKey &);
 
+		/**
+		* \brief 重命名一个格点
+		*/
 		void rename(const NodeKey &,const NodeKey &);
 
+		/**
+		* \brief 将另一个格点缩入一个格点
+		*/
 		void absorb(const NodeKey &,const NodeKey &,absorb_type<NodeVal,EdgeVal,EdgeKey>,
 			contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
+		/**
+		* \brief 将另一个格点分解为两个格点
+		*/
 		void split(const NodeKey &,const NodeKey &,const NodeKey &, const std::set<EdgeKey,typename Trait::edgekey_less> &, const EdgeKey &, const EdgeKey &,
 			dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less>);
+		/**
+		* \brief 将另一个格点分解为两个格点
+		*/
 		void split(const NodeKey &,const NodeKey &, const std::set<EdgeKey,typename Trait::edgekey_less> &, const EdgeKey &, const EdgeKey &,
 			dec_type<NodeVal,EdgeVal,EdgeKey,typename Trait::edgekey_less>);
 	#ifdef NET_GRAPH_VIZ
+		/**
+		* \brief 画出网络的图并输出到文件
+		*/
 		void draw_to_file(const std::string &,const bool);
+		/**
+		* \brief 画出网络的图并输出到文件，强调网络的一部分
+		*/
 		void draw_to_file(const std::string &,const std::set<NodeKey,typename Trait::nodekey_less> &,const bool);
 	#ifdef NET_SHOW_FIG
+		/**
+		* \brief 画出网络的图并输出
+		*/
 		void draw(const bool);
+		/**
+		* \brief 画出网络的图并输出，强调网络的一部分
+		*/
 		void draw(const std::set<NodeKey,typename Trait::nodekey_less> &,const bool);
 	#endif
 	#endif
+		/**
+		* \brief 将网络转化为graphviz格式的字符串
+		*/
 		std::string gviz(const std::set<NodeKey,typename Trait::nodekey_less> &,const bool);
+		/**
+		* \brief 判断网络是否包含一个格点
+		*/
 		bool exist(const NodeKey &);
 
+		/**
+		* \brief 返回网络的一个格点的信息
+		*/
 		NodeVal& operator[](const NodeKey &);
+		/**
+		* \brief 设置网络的一个格点的信息
+		*/
 		void set_val(const NodeKey &,const NodeVal& );
+		/**
+		* \brief 初始化网络的格点的信息
+		*/
 		void init_nodes(init_node_type<NodeVal,EdgeKey> );
+		/**
+		* \brief 初始化网络的边的信息
+		*/
 		void init_edges(init_edge_type<EdgeVal,EdgeKey> );
+		/**
+		* \brief 缩并整个网络
+		*/
 		NodeVal contract(absorb_type<NodeVal,EdgeVal,EdgeKey>, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
 
+		/**
+		* \brief 缩并的辅助函数
+		*/
 		void tn_contract1(const NodeKey &,const std::set<NodeKey,typename Trait::nodekey_less> &, NodeVal&, 
 			absorb_type<NodeVal,EdgeVal,EdgeKey>, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
+		/**
+		* \brief 缩并的辅助函数
+		*/
 		NodeVal tn_contract2(const std::set<NodeKey,typename Trait::nodekey_less> &, NodeVal&, const std::set<NodeKey,typename Trait::nodekey_less> &, NodeVal&,
 			absorb_type<NodeVal,EdgeVal,EdgeKey>, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
 
 	private:
+		/**
+		* \brief 网络的格点
+		*/
 		std::map<NodeKey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> nodes;
+		/**
+		* \brief 网络的名字
+		*/
 		std::string name="";
 	};
 
