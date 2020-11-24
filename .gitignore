@@ -2,9 +2,14 @@
 TAT
 build
 docs
+temp
+vuepress
+deploy.sh
+doxybook.json
 .idea
 /example/*
 !/example/*.cpp
 !/example/*.hpp
 !/example/*.h
 !/example/makefile
+*.sublime*

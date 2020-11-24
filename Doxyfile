@@ -8,7 +8,7 @@ PROJECT_NAME           = "net"
 PROJECT_NUMBER         = "VERSION TO ADD"
 PROJECT_BRIEF          = "BREIF TO ADD"
 PROJECT_LOGO           =
-OUTPUT_DIRECTORY       =
+OUTPUT_DIRECTORY       = temp
 CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = YES
 OUTPUT_LANGUAGE        = Chinese
@@ -230,7 +230,8 @@ GENERATE_MAN           = NO
 #---------------------------------------------------------------------------
 # Configuration options related to the XML output
 #---------------------------------------------------------------------------
-GENERATE_XML           = NO
+GENERATE_XML           = YES
+XML_OUTPUT             = xml
 #---------------------------------------------------------------------------
 # Configuration options related to the DOCBOOK output
 #---------------------------------------------------------------------------

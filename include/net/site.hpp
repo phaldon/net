@@ -1,12 +1,12 @@
-#ifndef SITE_H
-#define SITE_H
+#ifndef NET_SITE_HPP
+#define NET_SITE_HPP
 
 #include <map>
 #include <string>
 #include <vector>
 
 namespace net{
-	template <typename T,typename V>
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	class site;
 
    /**
@@ -14,35 +14,40 @@ namespace net{
     *
     * \see site
     */
-	template <typename T,typename V>
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	class bond{
-	template <typename T1,typename V1>
-	friend std::ostream & operator<<(std::ostream &,const bond<T1,V1> &);
-	template <typename T1,typename V1>
-	friend std::istream & operator>>(std::istream &, bond<T1,V1> &);
-	template <typename T1,typename V1>
-	friend std::ostream & operator<(std::ostream &,const bond<T1,V1> &);
-	template <typename T1,typename V1>
-	friend std::istream & operator>(std::istream &, bond<T1,V1> &);
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::ostream & output_bond_text(std::ostream &, const bond<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::istream & input_bond_text(std::istream &, bond<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::ostream & output_bond_bin(std::ostream &, const bond<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::istream & input_bond_bin(std::istream &, bond<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 	public:
         /**
          * \brief 所指向的格点的名称
          */
-		std::string name;
+		NodeKey name;
 		/**
 		 * \brief 所指向格点连接自身的边的名称
 		 */
-		std::string ind;
-		site<T,V> * neighbor;
+		EdgeKey ind;
+		site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * neighbor;
 		/**
 		 * \brief 边上的附着信息
 		 */
-		V val;
+		EdgeVal val;
 
 		bond()=default;
-		bond(const std::string & s1,const std::string & s2,site<T,V> * s): name(s1),ind(s2),neighbor(s){};
-		bond(const std::string & s1,const std::string & s2,site<T,V> * s, const V & E):name(s1),ind(s2),neighbor(s),val(E){};
-		bond(const bond<T,V>&)=default;
+		bond(const NodeKey & s1,const EdgeKey & s2,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * s):
+			name(s1),ind(s2),neighbor(s){};
+		bond(const NodeKey & s1,const EdgeKey & s2,site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * s, const EdgeVal & E):
+			name(s1),ind(s2),neighbor(s),val(E){};
+		bond(const bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>&)=default;
 	};
 
    /**
@@ -53,41 +58,43 @@ namespace net{
     * \see network
     * \see bond
     */
-	template <typename T,typename V>
+	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	class site{
-	template <typename T1,typename V1>
-	friend std::ostream & operator<<(std::ostream &,const site<T1,V1> &);
-	template <typename T1,typename V1>
-	friend std::istream & operator>>(std::istream &, site<T1,V1> &);
-	template <typename T1,typename V1>
-	friend std::ostream & operator<(std::ostream &,const site<T1,V1> &);
-	template <typename T1,typename V1>
-	friend std::istream & operator>(std::istream &, site<T1,V1> &);
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::ostream & output_site_text(std::ostream &, const site<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::istream & input_site_text(std::istream &, site<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::ostream & output_site_bin(std::ostream &, const site<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+
+	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	friend std::istream & input_site_bin(std::istream &, site<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 	public:
 		//constructor
 		site()=default;
-		site(const T& s):val(s){};
+		site(const NodeVal& s):val(s){};
 		//copy constructor
-		site(const site<T,V>&)=default;
+		site(const site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>&)=default;
 		//copy assignment
-		site<T,V>& operator=(const site<T,V>&)=default;
+		site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>& operator=(const site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>&)=default;
 		//move constructor
-		site(site<T,V>&&)=default;
+		site(site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>&&)=default;
 		//move assignment
-		site<T,V>& operator=(site<T,V>&&)=default;
+		site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>& operator=(site<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>&&)=default;
 
 		void clean();
 
 		/**
 		 * \brief 格点所附着的信息
 		 */
-		T val;
+		NodeVal val;
 		/**
 		 * \brief 格点所相连的边, 存储了另一测的指针等信息
 		 * \see bond
 		 */
-		std::map<std::string,bond<T,V>> bonds;
-		std::vector<int> position;
+		std::map<EdgeKey,bond<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::edgekey_less> bonds;
 	};
 }
 
