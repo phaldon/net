@@ -2,6 +2,8 @@
 TAT
 build
 docs
+temp
+vuepress
 .idea
 /example/*
 !/example/*.cpp
