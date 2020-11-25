@@ -35,8 +35,11 @@ namespace net{
 		/**
 		 * \brief 所指向格点连接自身的边的名称
 		 */
-		EdgeKey ind;
-		node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * neighbor;
+		EdgeKey nbind;
+        /**
+         * \brief 所指向的格点的指针
+         */
+		node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * nbnode;
 		/**
 		 * \brief 边上的附着信息
 		 */
@@ -44,9 +47,9 @@ namespace net{
 
 		edge()=default;
 		edge(const NodeKey & s1,const EdgeKey & s2,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * s):
-			nbkey(s1),ind(s2),neighbor(s){};
+			nbkey(s1),nbind(s2),nbnode(s){};
 		edge(const NodeKey & s1,const EdgeKey & s2,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * s, const EdgeVal & E):
-			nbkey(s1),ind(s2),neighbor(s),val(E){};
+			nbkey(s1),nbind(s2),nbnode(s),val(E){};
 		edge(const edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>&)=default;
 	};
 

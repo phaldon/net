@@ -144,7 +144,7 @@ namespace net{
 			std::cout<<"\a";
 		}
 		std::cout<<"\n";
-		std::cout<<"Paused. Please press enter to continue.\n";
+		std::cout<<"\x1B[31mPaused.\x1B[0m Please press enter to continue.\n";
 		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 #else
 #ifdef __CLING__
@@ -197,7 +197,7 @@ namespace net{
 			for(auto & b_it:s_it.second.edges){
 				auto & ind1=b_it.first;
 				auto & nodekey2=b_it.second.nbkey;
-				auto & ind2=b_it.second.ind;
+				auto & ind2=b_it.second.nbind;
 				fst_attr=true;
 				if (drawn_nodes.count(nodekey2)==0){
 					dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" -> "<<Trait::nodekey_brief(nodekey2)<<" [fontcolor=White, fontname=\"Monaco\",";

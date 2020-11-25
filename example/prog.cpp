@@ -24,10 +24,10 @@ int main(){
 	lat.add("C");
 	lat.add("D");
 	//lat.add("A");
-	lat.set_edge("A","B","A.B","B.A");
-	lat.set_edge("A","C","A.C","C.A");
-	lat.set_edge("B","C","B.C","C.B");
-	lat.set_edge("C","D","C.D","D.C");
+	lat.set_edge("A","B");
+	lat.set_edge("A","C");
+	lat.set_edge("B","C");
+	lat.set_edge("C","D");
 	//lat.set_edge("A","B","A.B","B.new");
 
 	std::cout<<lat<<std::endl;
@@ -53,14 +53,12 @@ int main(){
 	for(int i=0;i<4;++i){
 		for (int j=0;j<3;++j){
 			//std::cout<<i<<j<<std::endl;
-			lat2.set_edge("ten"+str(i)+"_"+str(j),"ten"+str(i)+"_"+str(j+1),
-				"ten"+str(i)+"_"+str(j)+".ten"+str(i)+"_"+str(j+1),"ten"+str(i)+"_"+str(j+1)+".ten"+str(i)+"_"+str(j));
+			lat2.set_edge("ten"+str(i)+"_"+str(j),"ten"+str(i)+"_"+str(j+1));
 		}
 	}
 	for(int i=0;i<3;++i){
 		for (int j=0;j<4;++j){
-			lat2.set_edge("ten"+str(i)+"_"+str(j),"ten"+str(i+1)+"_"+str(j),
-				"ten"+str(i)+"_"+str(j)+".ten"+str(i+1)+"_"+str(j),"ten"+str(i+1)+"_"+str(j)+".ten"+str(i)+"_"+str(j));
+			lat2.set_edge("ten"+str(i)+"_"+str(j),"ten"+str(i+1)+"_"+str(j));
 		}
 	}
 

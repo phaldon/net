@@ -57,6 +57,11 @@ namespace net{
 		}
 	};
 
+	template<typename EdgeKey,typename NodeKey>
+	struct base_bind_traits{
+		static NodeKey bind(const EdgeKey & edgekey1,const EdgeKey & edgekey2);
+	};
+
 	template<typename EdgeVal>
 	struct base_edgeval_traits{
 		static std::ostream & edgeval_write_text(std::ostream & os, const EdgeVal & edgeval){
@@ -91,7 +96,7 @@ namespace net{
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey,typename EdgeKey>
 	struct base_traits:base_nodeval_traits<NodeVal>,base_edgeval_traits<EdgeVal>,
-	base_nodekey_traits<NodeKey>,base_edgekey_traits<EdgeKey>{};
+	base_nodekey_traits<NodeKey>,base_edgekey_traits<EdgeKey>,base_bind_traits<EdgeKey,NodeKey>{};
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey,typename EdgeKey>
 	struct default_traits: base_traits<NodeVal,EdgeVal,NodeKey,EdgeKey>{
@@ -101,6 +106,9 @@ namespace net{
 	struct default_traits<NodeVal,EdgeVal,std::string,std::string>: base_traits<NodeVal,EdgeVal,std::string,std::string>{
 		static std::string edgekey_brief(const std::string & e){
 			return e.substr(e.find('.')+1);
+		}
+		static std::string bind(const std::string & e1,const std::string & e2){
+			return e1+'.'+e2;
 		}
 	};
 
@@ -121,6 +129,9 @@ namespace net{
 			edge.first=long_name.substr(0,pos);
 			edge.second=long_name.substr(pos+1);
 			return is;
+		}
+		static std::pair<std::string,std::string> bind(const std::string & e1,const std::string & e2){
+			return std::make_pair(e1,e2);
 		}
 	};
 

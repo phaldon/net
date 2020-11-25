@@ -41,7 +41,7 @@ namespace net{
 	std::ostream & output_edge_text(std::ostream & os,const edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
 		Trait::nodekey_write_text(os,b.nbkey);
 		os<<' ';
-		Trait::edgekey_write_text(os,b.ind);
+		Trait::edgekey_write_text(os,b.nbind);
 		os<<' ';
 		Trait::edgeval_write_text(os,b.val);
 		return os;
@@ -60,7 +60,7 @@ namespace net{
 		}
 		for(auto & s:n.nodes){
 			for (auto & b: s.second.edges){
-				b.second.neighbor=&(n.nodes[b.second.name]);
+				b.second.nb_node=&(n.nodes[b.second.name]);
 			}
 		}
 		return is;
@@ -83,7 +83,7 @@ namespace net{
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	std::istream & input_edge_text(std::istream & is,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & b){
 		Trait::nodekey_read_text(is,b.nbkey);
-		Trait::edgekey_read_text(is,b.ind);
+		Trait::edgekey_read_text(is,b.nbind);
 		Trait::edgeval_read_text(is,b.val);
 		return is;
 	}
