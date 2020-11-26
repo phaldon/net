@@ -106,6 +106,8 @@ int main(){
 
 	benchmark.print();
 
+	if(lat2.consistency(std::cout)) std::cout<<"Network is consistent!"<<std::endl;
+
 	lat2.draw(true);
 	//lat3.draw(true);
 	return 0;

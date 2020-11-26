@@ -152,8 +152,9 @@ namespace net{
 		/**
 		* \brief 重命名一个格点
 		*/
-		void rename(const NodeKey &,const NodeKey &);
-		void rename(IterNode &,const NodeKey &);
+		IterNode rename(const NodeKey &,const NodeKey &);
+		IterNode rename(IterNode &,const NodeKey &);
+		IterNode rename(const IterNode &,const NodeKey &);
 
 		/**
 		* \brief 将另一个格点缩入一个格点
@@ -199,6 +200,12 @@ namespace net{
 		* \brief 判断网络是否包含一个格点
 		*/
 		bool exist(const NodeKey &);
+
+		/**
+		* \brief 判断网络是否是没有冲突
+		*/
+		bool consistency();
+		bool consistency(std::ostream & diagnosis);
 
 		/**
 		* \brief 返回网络的一个格点的信息
@@ -416,7 +423,8 @@ namespace net{
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::rename(const NodeKey & old_key,const NodeKey & new_key){
+	typename network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::rename
+		(const NodeKey & old_key,const NodeKey & new_key){
 
 		auto node_handle = nodes.extract(old_key);
 		if(node_handle.empty()){
@@ -434,11 +442,13 @@ namespace net{
 			nbedge.nbkey=new_key;
 			nbedge.nbnode=&(it->second);
 		}
+		return it;
 	}
 
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::rename(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode & it,const NodeKey & new_key){
+	typename network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::rename
+		(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode & it,const NodeKey & new_key){
 
 		auto node_handle = nodes.extract(it);
 		if(node_handle.empty()){
@@ -456,6 +466,31 @@ namespace net{
 			nbedge.nbkey=new_key;
 			nbedge.nbnode=&(it->second);
 		}
+		return it;
+	}
+
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	typename network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::rename
+		(const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode & it,const NodeKey & new_key){
+
+		auto node_handle = nodes.extract(it);
+		if(node_handle.empty()){
+			throw key_unfound_error("In network.rename, node "+to_string(it->first)+" is not found!");
+		}
+		node_handle.key=new_key;
+		
+		auto status = nodes.insert(std::move(node_handle));
+		if(!status.inserted)throw key_exist_error("In network.rename, node "+to_string(new_key)+" already exists!");
+		
+		auto newit=status.position;
+		for(auto & b: newit->second.edges){
+			// nbnode= *(b.second.nbnode)
+			auto & nbedge=b.second.nbnode->edges[b.second.nbind];
+			nbedge.nbkey=new_key;
+			nbedge.nbnode=&(newit->second);
+		}
+		return newit;
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -759,6 +794,34 @@ namespace net{
 			}
 		}
 	}
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	bool network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::consistency(){
+		return consistency(std::cout);
+	}
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	bool network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::consistency(std::ostream & diagnosis){
+		for (auto & s:nodes){
+			for (auto & b:s.second.edges){ // check if b is consistent
+				if(nodes.count(b.second.nbkey)==0){
+					diagnosis<<"Network is not consistent, neighbor of node "+to_string(s.first)+
+					+" : "+to_string(b.second.nbkey)+" is not found!\n";
+					return false;
+				}else if(nodes[b.second.nbkey].edges.count(b.second.nbind)==0){
+					diagnosis<<"Network is not consistent, neighbor of node "+to_string(s.first)+
+					+" : "+to_string(b.second.nbkey)+" has not index named "+to_string(b.second.nbind)+" !\n";
+					return false;
+				}else if(b.second.nbnode != &(nodes[b.second.nbkey])){
+					diagnosis<<"Network is not consistent, pointer to neighbor of node "+to_string(s.first)+
+					+" : "+to_string(b.second.nbkey)+" is not correctly pointed !\n";
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 
 }
 #endif
