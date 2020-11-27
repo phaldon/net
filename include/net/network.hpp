@@ -96,6 +96,14 @@ namespace net{
 	friend network<NodeVal2,EdgeVal2,NodeKey1,EdgeKey1,Trait1> fmap(const network<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> & n,
 		std::function<NodeVal2(const NodeVal1 &)> f1,std::function<EdgeVal2(const EdgeVal1 &)> f2);
 
+	/**
+	* \brief 利用格点上的信息的函数和边上信息的函数从一个网络得到另一个网络，同时做sitekey和edgekey的变换
+	*/
+	template<typename NodeVal1,typename EdgeVal1,typename NodeVal2,typename EdgeVal2, typename NodeKey1, typename EdgeKey1, typename Trait1>
+	friend network<NodeVal2,EdgeVal2,NodeKey1,EdgeKey1,Trait1> fmap(const network<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> & n,
+		std::function<NodeVal2(const NodeVal1 &)> f1,std::function<EdgeVal2(const EdgeVal1 &)> f2,std::function<NodeKey1(const NodeKey1 &)> f3,
+		std::function<EdgeKey1(const EdgeKey1 &)> f4);
+
 	public:
 		//constructor
 		network()=default;
@@ -181,7 +189,6 @@ namespace net{
 		* \brief 画出网络的图并输出到文件，强调网络的一部分
 		*/
 		void draw_to_file(const std::string &,const std::set<NodeKey,typename Trait::nodekey_less> &,const bool);
-	#ifdef NET_SHOW_FIG
 		/**
 		* \brief 画出网络的图并输出
 		*/
@@ -190,7 +197,6 @@ namespace net{
 		* \brief 画出网络的图并输出，强调网络的一部分
 		*/
 		void draw(const std::set<NodeKey,typename Trait::nodekey_less> &,const bool);
-	#endif
 	#endif
 		/**
 		* \brief 将网络转化为graphviz格式的字符串
@@ -266,7 +272,7 @@ namespace net{
 		name=N.name;
 		for(auto & s:nodes){
 			for (auto & b: s.second.edges){
-				b.second.nbnode=&(nodes[b.second.name]);
+				b.second.nbnode=&(nodes[b.second.nbkey]);
 			}
 		}
 	}
@@ -280,7 +286,7 @@ namespace net{
 			name=N.name;
 			for(auto & s:nodes){
 				for (auto & b: s.second.edges){
-					b.second.nbnode=&(nodes[b.second.name]);
+					b.second.nbnode=&(nodes[b.second.nbkey]);
 				}
 			}
 		}
@@ -774,6 +780,28 @@ namespace net{
 			for (auto & b:s.second.edges){
 				its->second.edges[b.first]=edge<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>
 					(b.second.nbkey,b.second.nbind,nullptr,f2(b.second.val));
+			}
+		}
+		for (auto & s:result.nodes){
+			for (auto & b:s.second.edges){
+				b.second.nbnode=&(result.nodes[b.second.nbkey]);
+			}
+		}
+		return result;
+	}
+
+	template<typename NodeVal1,typename EdgeVal1,typename NodeVal2,typename EdgeVal2, typename NodeKey, typename EdgeKey, typename Trait>
+	network<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait> fmap(const network<NodeVal1,EdgeVal1,NodeKey,EdgeKey,Trait> & n,
+		std::function<NodeVal2(const NodeVal1 &)> f1,std::function<EdgeVal2(const EdgeVal1 &)> f2,std::function<NodeKey(const NodeKey &)> f3,
+		std::function<EdgeKey(const EdgeKey &)> f4){
+		network<NodeVal2,EdgeVal2,NodeKey,EdgeKey> result;
+		result.name=n.name;
+		for (auto & s:n.nodes){
+			const auto [its, success] = result.nodes.insert({f3(s.first),node<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>()});
+			its->second.val=f1(s.second.val);
+			for (auto & b:s.second.edges){
+				its->second.edges[f4(b.first)]=edge<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>
+					(f3(b.second.nbkey),f4(b.second.nbind),nullptr,f2(b.second.val));
 			}
 		}
 		for (auto & s:result.nodes){

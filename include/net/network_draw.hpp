@@ -14,67 +14,24 @@
 #include "error.hpp"
 #include "node.hpp"
 #include "network.hpp"
+#include "gviz.hpp"
 
 #ifdef NET_GRAPH_VIZ
 #include <graphviz/gvc.h>
 #include <graphviz/cgraph.h>
-
-#ifdef NET_SHOW_FIG
-#ifdef __APPLE_
-// do nothing, iterm2 support graph
-#else
-#ifdef __CLING__
+#ifdef NET_SHOW_FIG_USE_CLING
 #include <unistd.h>
-#include <map>
-#include <string>
-extern int pipeToJupyterFD;
-// https://github.com/root-project/cling/blob/0c880f8472f5a313095203ccd35561b0097b13ec/tools/Jupyter/Kernel.cpp#L54
-bool show_mime(const std::map<std::string, std::string>& contentDict) {
-  unsigned char sizeLong = sizeof(long);
-  if (write(pipeToJupyterFD, &sizeLong, 1) != 1)
-    return false;
-  long dictSize = contentDict.size();
-  if (write(pipeToJupyterFD, &dictSize, sizeof(long)) != sizeof(long))
-    return false;
-
-  for (auto iContent: contentDict) {
-    const std::string& mimeType = iContent.first;
-    long mimeTypeSize = (long)mimeType.size();
-    if (write(pipeToJupyterFD, &mimeTypeSize, sizeof(long)) != sizeof(long))
-      return false;
-    if (write(pipeToJupyterFD, mimeType.c_str(), mimeType.size() + 1)
-        != (long)(mimeType.size() + 1))
-      return false;
-    const std::string& mimeData = iContent.second;
-    const long string_size = mimeData.size();
-    if (write(pipeToJupyterFD, &string_size, sizeof(long))
-        != sizeof(long))
-      return false;
-    if (write(pipeToJupyterFD, mimeData.data(), string_size)
-        != string_size)
-      return false;
-  }
-  return true;
-}
-#else
-#include <cstdlib>
-#endif
-#endif
 #endif
 #endif
 
 namespace net{
 
+std::string base64_encode(const std::string &in);
+
 #ifdef NET_GRAPH_VIZ
 	std::string render(std::string dot_content);
-#ifdef NET_SHOW_FIG
 	void show_fig(const std::string & fig_content,bool tmux);
-#endif
-#endif
 
-	static std::string base64_encode(const std::string &in);
-
-#ifdef NET_GRAPH_VIZ
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw_to_file(const std::string & filename,const bool label_bond){
 
@@ -92,7 +49,7 @@ namespace net{
 
 	}
 
-	std::string render(std::string dot_content){
+	inline std::string render(std::string dot_content){
 	    GVC_t *gvc;
 	    Agraph_t *g;
 	    char * cres;
@@ -109,7 +66,6 @@ namespace net{
 	    return res;
 	}
 
-#ifdef NET_SHOW_FIG
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::draw(const bool label_bond){
 
@@ -129,8 +85,41 @@ namespace net{
 
 	}
 
-	void show_fig(const std::string & fig_content,bool tmux){
-#ifdef __APPLE__
+#ifdef NET_SHOW_FIG_USE_CLING
+
+	extern int pipeToJupyterFD;
+	// https://github.com/root-project/cling/blob/0c880f8472f5a313095203ccd35561b0097b13ec/tools/Jupyter/Kernel.cpp#L54
+	inline bool show_mime(const std::map<std::string, std::string>& contentDict) {
+	  unsigned char sizeLong = sizeof(long);
+	  if (write(pipeToJupyterFD, &sizeLong, 1) != 1)
+	    return false;
+	  long dictSize = contentDict.size();
+	  if (write(pipeToJupyterFD, &dictSize, sizeof(long)) != sizeof(long))
+	    return false;
+
+	  for (auto iContent: contentDict) {
+	    const std::string& mimeType = iContent.first;
+	    long mimeTypeSize = (long)mimeType.size();
+	    if (write(pipeToJupyterFD, &mimeTypeSize, sizeof(long)) != sizeof(long))
+	      return false;
+	    if (write(pipeToJupyterFD, mimeType.c_str(), mimeType.size() + 1)
+	        != (long)(mimeType.size() + 1))
+	      return false;
+	    const std::string& mimeData = iContent.second;
+	    const long string_size = mimeData.size();
+	    if (write(pipeToJupyterFD, &string_size, sizeof(long))
+	        != sizeof(long))
+	      return false;
+	    if (write(pipeToJupyterFD, mimeData.data(), string_size)
+	        != string_size)
+	      return false;
+	  }
+	  return true;
+	}
+#endif
+
+	inline void show_fig(const std::string & fig_content,bool tmux){
+#if defined NET_SHOW_FIG_USE_ITERM
 		if(tmux){
 			std::cout<<"\033Ptmux;\033\033]";
 		}else{
@@ -146,93 +135,22 @@ namespace net{
 		std::cout<<"\n";
 		std::cout<<"\x1B[31mPaused.\x1B[0m Please press enter to continue.\n";
 		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-#else
-#ifdef __CLING__
+#elif defined NET_SHOW_FIG_USE_CLING
       show_mime({{"text/html","<img src='data:image/png;base64, "+base64_encode(fig_content)+"'></img>"}});
-#else
+#elif defined  NET_SHOW_FIG_USE_GWENVIEW
       std::ofstream("/tmp/net_tmp.png") << fig_content;
       std::system("gwenview /tmp/net_tmp.png || eog /tmp/net_tmp.png");
-#endif
+#elif
+      std::cout<<"Method of showing the figure is invalid or unspecified!\n"
 #endif
 	}
-#endif
 
 #endif
-
-	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	std::string network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::gviz(const std::set<NodeKey,typename Trait::nodekey_less> & contains,const bool label_bond){
-
-		std::stringstream dot_content;
-		bool fst_attr;
-		std::set<NodeKey,typename Trait::nodekey_less> drawn_nodes;
-		
-		dot_content<<"digraph G {\n";
-		dot_content<<"  scale=0.6\n";
-		dot_content<<"  dpi=160\n";
-		dot_content<<"  bgcolor=\"transparent\"\n";
-		dot_content<<"  fontcolor=White\n";
-		dot_content<<"  fontname=\"Monaco\"\n";
-		if(name==""){
-			dot_content<<"  label = \"figure of network\"\n";
-		}else{
-			dot_content<<"  label = \"figure of "+name+"\"\n";
-		}
-		
-
-		for(auto& s_it:nodes){
-			auto & nodekey1=s_it.first;
-			if (contains.count(nodekey1)==1){
-				dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" [ color=Red, label = \""<<
-				Trait::nodekey_brief(nodekey1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
-			}else{
-				dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" [ color=White, label = \""<<
-				Trait::nodekey_brief(nodekey1)<<"\", fontcolor=White, fontname=\"Monaco\"]\n";
-			}
-		}
-		dot_content<<"subgraph bond {\n";
-		dot_content<<"  edge[dir=none]\n";
-
-		for(auto & s_it:nodes){
-			auto & nodekey1=s_it.first;
-			for(auto & b_it:s_it.second.edges){
-				auto & ind1=b_it.first;
-				auto & nodekey2=b_it.second.nbkey;
-				auto & ind2=b_it.second.nbind;
-				fst_attr=true;
-				if (drawn_nodes.count(nodekey2)==0){
-					dot_content<<"  "<<Trait::nodekey_brief(nodekey1)<<" -> "<<Trait::nodekey_brief(nodekey2)<<" [fontcolor=White, fontname=\"Monaco\",";
-					if(label_bond){
-						if (!fst_attr) dot_content<<",";
-						dot_content<<"taillabel = \""<<Trait::edgekey_brief(ind1)<<"\",headlabel =\""<<Trait::edgekey_brief(ind2)<<"\"";
-						fst_attr=false;
-					}
-					if(contains.count(nodekey1)==1 && contains.count(nodekey2)==1){
-						if (!fst_attr) dot_content<<",";
-						dot_content<<"color=Red";
-						fst_attr=false;
-					}else{
-						if (!fst_attr) dot_content<<",";
-						dot_content<<"color=White";
-						fst_attr=false;
-					}
-					if (!fst_attr) dot_content<<",";
-					dot_content<<" len=3]\n";
-				}
-			}
-			drawn_nodes.insert(nodekey1);
-		}
-
-		dot_content<<"}\n";
-		dot_content<<"}\n";
-		return dot_content.str();
-
-	}
-
 
 	// base64 functions are copied from https://stackoverflow.com/questions/180947/base64-decode-snippet-in-c
 	// originally by Manuel Martinez
 
-	static std::string base64_encode(const std::string &in) {
+	inline std::string base64_encode(const std::string &in) {
 
 	    std::string out;
 
@@ -250,7 +168,7 @@ namespace net{
 	    return out;
 	}
 
-	static std::string base64_decode(const std::string &in) {
+	inline std::string base64_decode(const std::string &in) {
 
 	    std::string out;
 

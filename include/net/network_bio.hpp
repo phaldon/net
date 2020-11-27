@@ -17,7 +17,7 @@ namespace net{
 		return os.write(reinterpret_cast<const char*>(&m), sizeof m);
 	}
 
-	std::ostream & output_bin(std::ostream & os,const std::string & m){
+	inline std::ostream & output_bin(std::ostream & os,const std::string & m){
 		unsigned int len=m.size();
 		output_bin(os,len);
 		return os.write(&m[0], len);
@@ -28,7 +28,7 @@ namespace net{
 		return is.read(reinterpret_cast<char*>(&m), sizeof m);
 	}
 
-	std::istream & input_bin(std::istream & is,std::string & m){
+	inline std::istream & input_bin(std::istream & is,std::string & m){
 		unsigned int len;
 		input_bin(is,len);
 		m.resize(len);

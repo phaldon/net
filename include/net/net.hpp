@@ -7,6 +7,8 @@
 #include "network_io.hpp"
 #include "group.hpp"
 
+// gcc main.cpp -DLALAL=ITERM2
+
 //pre-processor parameters:
 //NET_GRAPH_VIZ : used to render the figure of a network. installation of graphviz is required. 
 				//required libraries: gvc, cgraph

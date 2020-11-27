@@ -114,13 +114,13 @@ namespace net{
 		return is;
 	}
 
-	std::ostream & default_write_bin_str(std::ostream & os,const std::string & m){
+	inline std::ostream & default_write_bin_str(std::ostream & os,const std::string & m){
 		unsigned int len=m.size();
 		default_write_bin(os,len);
 		return os.write(&m[0], len);
 	}
 
-	std::istream & default_read_bin(std::istream & is,std::string & m){
+	inline std::istream & default_read_bin(std::istream & is,std::string & m){
 		unsigned int len;
 		default_read_bin(is,len);
 		m.resize(len);
