@@ -6,6 +6,7 @@
 #include "traits.hpp"
 #include <random>
 #include <variant>
+#include <functional>
 
 namespace net{
 	namespace tensor{
@@ -74,6 +75,48 @@ namespace net{
 		template <typename T,typename EdgeKey=stdEdgeKey>
 		std::monostate zero_map(const Tensor<T,EdgeKey> &ten){
 			return std::monostate();
+		}
+
+		inline std::string conjugate_string(const std::string & s){
+			return "conjg_"+s;
+		}
+		inline std::function<std::string(const std::string &)> conjugate_string_fun=conjugate_string;
+
+		inline std::monostate conjugate_mono(const std::monostate & m){
+			return m;
+		}
+		inline std::function<std::monostate(const std::monostate &)> conjugate_mono_fun=conjugate_mono;
+
+		template <typename T>
+		Tensor<T> conjugate_tensor(const Tensor<T> & t){
+			std::map<std::string,std::string> name_map;
+			for (auto & m:t.names){
+				name_map[m]=conjugate_string(m);
+			}
+			return t.conjugate().edge_rename(name_map);
+		}
+		template <typename T>
+		std::function<Tensor<T>(const Tensor<T> &)> conjugate_tensor_fun=conjugate_tensor<T>;
+		
+		template <typename T>
+		TensorNetworkEnv<T> conjugate_tnenv(const TensorNetworkEnv<T> & t){
+			return fmap(t,conjugate_tensor_fun<T>,conjugate_tensor_fun<T>,conjugate_string_fun,conjugate_string_fun);
+		}
+		template <typename T>
+		TensorNetworkNoEnv<T> conjugate_tnnoenv(const TensorNetworkNoEnv<T> & t){
+			return fmap(t,conjugate_tensor_fun<T>,conjugate_mono_fun,conjugate_string_fun,conjugate_string_fun);
+		}
+		template <typename T>
+		TensorNetworkEnv<T> double_tnenv(const TensorNetworkEnv<T> & t){
+			TensorNetworkEnv<T> result=conjugate_tnenv(t);
+			result.add(t);
+			return result;
+		}
+		template <typename T>
+		TensorNetworkNoEnv<T> double_tnnoenv(const TensorNetworkNoEnv<T> & t){
+			TensorNetworkNoEnv<T> result=conjugate_tnnoenv(t);
+			result.add(t);
+			return result;
 		}
 	}
 }

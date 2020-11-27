@@ -130,6 +130,11 @@ namespace net{
 		* \brief 加一个格点
 		*/
 		IterNode add(const NodeKey &);
+
+		/**
+		* \brief 加一个网络
+		*/
+		void add(const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> &);
 		/**
 		* \brief 加一条边
 		*/
@@ -337,6 +342,17 @@ namespace net{
 			throw key_exist_error("In network.add, node "+to_string(nodekey)+" already exists!");
 		}
 		return s1;
+	}
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::add(const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> & n){
+		for(auto & s:n.nodes)
+			add(s.first)->second=s.second;
+		for(auto & s:nodes){
+			for (auto & b: s.second.edges){
+				b.second.nbnode=&(nodes[b.second.nbkey]);
+			}
+		}
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>

@@ -14,7 +14,7 @@
 int main(){
 	using namespace std::placeholders;
 	
-	net::tensor::TensorNetworkEnv<double> lat("test");
+	net::tensor::TensorNetworkEnv<double> lat("test"),cjlat("cjtest");
 	int seed =std::random_device()();
 	std::default_random_engine random_engine(seed);
 	timer benchmark;
@@ -33,9 +33,13 @@ int main(){
 	std::cout<<lat<<std::endl;
 
 	lat.draw(true);
+	cjlat=net::tensor::double_tnenv(lat);
+
+	cjlat.draw(true);
+
+
+
 	int n=0;
-
-
 	// net::network<std::monostate,std::monostate> lat_map;
 	// lat_map=net::fmap<>(lat,net::tensor::zero_map<double>,net::tensor::zero_map<double>);
 	// lat_map.draw(true);
