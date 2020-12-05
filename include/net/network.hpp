@@ -19,20 +19,20 @@ namespace net{
 	* \brief 格点的分解函数的类型
 	*/
 	template <typename NodeVal,typename EdgeVal,typename EdgeKey,typename Comp>
-	using dec_type = std::function<void(NodeVal&,NodeVal&,NodeVal&,
+	using dec_type = std::function<void(const NodeVal&,NodeVal&,NodeVal&,
 		const std::set<EdgeKey,Comp> &,const EdgeKey & ,const EdgeKey & ,EdgeVal&)>;
 
 	/**
 	* \brief 格点的吸收函数的类型
 	*/
 	template <typename NodeVal,typename EdgeVal,typename EdgeKey>
-	using absorb_type = std::function<void(NodeVal&,EdgeVal&,const EdgeKey &)>;
+	using absorb_type = std::function<NodeVal(const NodeVal&,const EdgeVal&,const EdgeKey &)>;
 
 	/**
 	* \brief 格点的缩并函数的类型
 	*/
 	template <typename NodeVal,typename EdgeKey,typename Comp>
-	using contract_type = std::function<NodeVal(NodeVal&,NodeVal&,const std::set<std::pair<EdgeKey,EdgeKey>,Comp> &)>;
+	using contract_type = std::function<NodeVal(const NodeVal&,const NodeVal&,const std::set<std::pair<EdgeKey,EdgeKey>,Comp> &)>;
 
 	/**
 	* \brief 格点信息的初始化函数的类型
@@ -132,6 +132,11 @@ namespace net{
 		IterNode add(const NodeKey &);
 
 		/**
+		* \brief 查找一个格点
+		*/
+		IterNode find(const NodeKey &);
+
+		/**
 		* \brief 加一个网络
 		*/
 		void add(const network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> &);
@@ -166,7 +171,6 @@ namespace net{
 		* \brief 重命名一个格点
 		*/
 		IterNode rename(const NodeKey &,const NodeKey &);
-		IterNode rename(IterNode &,const NodeKey &);
 		IterNode rename(const IterNode &,const NodeKey &);
 
 		/**
@@ -336,6 +340,16 @@ namespace net{
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	typename network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::find(const NodeKey & nodekey){
+		
+		auto node_itr = nodes.find(nodekey);
+		if(node_itr == nodes.end()){
+			throw key_unfound_error("In network.find, node "+to_string(nodekey)+" is not found!");
+		}
+		return node_itr;
+	}
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	typename network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::add(const NodeKey & nodekey){
 		auto [s1,succ1]=nodes.insert(make_pair(nodekey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>()));
 		if(!succ1){
@@ -388,12 +402,11 @@ namespace net{
 			throw key_unfound_error("In network.del_edge, node "+to_string(nodekey1)+" is not found!");
 		}
 
-		auto node_itr2 = nodes.find(nodekey2);
-		if(node_itr2 == nodes.end()){
+		if(nodes.count(nodekey2)==0){
 			throw key_unfound_error("In network.del_edge, node "+to_string(nodekey2)+" is not found!");
 		}
 
-		del_edge(node_itr1,node_itr2);
+		node_itr1->second.del_edge_with_nbkey(nodekey2);
 
 	}
 
@@ -401,16 +414,7 @@ namespace net{
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_edge (network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it1,
 		network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it2){
 
-		// node1 = it1->second, node2 = it2->second
-		for(auto edge_itr=it1->second.edges.begin(); edge_itr != it1->second.edges.end();) {
-			//edge1=edge_itr->second
-			if (edge_itr->second.nbkey==it2->first) {
-				it2->second.edges.erase(edge_itr->second.nbind);
-				edge_itr=it1->second.edges.erase(edge_itr);
-			} else {
-				++edge_itr;
-			}
-		}
+		it1->second.del_edge_with_nbkey(it2->first);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -420,28 +424,13 @@ namespace net{
 		if(node_itr == nodes.end()){
 			throw key_unfound_error("In network.del_leg, node "+to_string(nodekey)+" is not found!");
 		}
-
-		auto edge_itr = node_itr->second.edges.find(ind);
-		if(edge_itr == node_itr->second.edges.end()){
-			throw key_unfound_error("In network.del_leg, leg "+to_string(ind)+" is not found!");
-		}
-
-		// nbnode= *(edge_itr->second.nbnode)
-		edge_itr->second.nbnode->edges.erase(edge_itr->second.nbind);
-		node_itr->second.edges.erase(ind);
+		node_itr->second.del_edge_with_ind(ind);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::del_leg(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it,const EdgeKey & ind){
 
-		auto edge_itr = it->second.edges.find(ind);
-		if(edge_itr == it->second.edges.end()){
-			throw key_unfound_error("In network.del_leg, leg "+to_string(ind)+" is not found!");
-		}
-
-		// nbnode= *(edge_itr->second.nbnode)
-		edge_itr->second.nbnode->edges.erase(edge_itr->second.nbind);
-		it->second.edges.erase(ind);
+		it->second.del_edge_with_ind(ind);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -453,42 +442,12 @@ namespace net{
 			throw key_unfound_error("In network.rename, node "+to_string(old_key)+" is not found!");
 		}
 		node_handle.key=new_key;
+		node_handle.value.reset_nbkey_of_nb(new_key);
 		
 		auto status = nodes.insert(std::move(node_handle));
 		if(!status.inserted)throw key_exist_error("In network.rename, node "+to_string(new_key)+" already exists!");
 
-		auto it=status.position;
-		for(auto & b: it->second.edges){
-			// nbnode= *(b.second.nbnode)
-			auto & nbedge=b.second.nbnode->edges[b.second.nbind];
-			nbedge.nbkey=new_key;
-			nbedge.nbnode=&(it->second);
-		}
-		return it;
-	}
-
-
-	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
-	typename network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::rename
-		(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode & it,const NodeKey & new_key){
-
-		auto node_handle = nodes.extract(it);
-		if(node_handle.empty()){
-			throw key_unfound_error("In network.rename, node "+to_string(it->first)+" is not found!");
-		}
-		node_handle.key=new_key;
-		
-		auto status = nodes.insert(std::move(node_handle));
-		if(!status.inserted)throw key_exist_error("In network.rename, node "+to_string(new_key)+" already exists!");
-		
-		it=status.position;
-		for(auto & b: it->second.edges){
-			// nbnode= *(b.second.nbnode)
-			auto & nbedge=b.second.nbnode->edges[b.second.nbind];
-			nbedge.nbkey=new_key;
-			nbedge.nbnode=&(it->second);
-		}
-		return it;
+		return status.position;
 	}
 
 
@@ -501,18 +460,12 @@ namespace net{
 			throw key_unfound_error("In network.rename, node "+to_string(it->first)+" is not found!");
 		}
 		node_handle.key=new_key;
+		node_handle.value.reset_nbkey_of_nb(new_key);
 		
 		auto status = nodes.insert(std::move(node_handle));
 		if(!status.inserted)throw key_exist_error("In network.rename, node "+to_string(new_key)+" already exists!");
 		
-		auto newit=status.position;
-		for(auto & b: newit->second.edges){
-			// nbnode= *(b.second.nbnode)
-			auto & nbedge=b.second.nbnode->edges[b.second.nbind];
-			nbedge.nbkey=new_key;
-			nbedge.nbnode=&(newit->second);
-		}
-		return newit;
+		return status.position;
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -527,20 +480,16 @@ namespace net{
 			throw key_unfound_error("In network.set_edge, node "+to_string(nodekey2)+" is not found!");
 		}
 
-		auto [s1,succ1]=node_itr1->second.edges.insert(make_pair(ind1,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(nodekey2,ind2,&(node_itr2->second))));
-		if(!succ1)throw key_exist_error("In network.set_edge, ind "+to_string(ind1)+" of node "+to_string(nodekey1)+" already linked!");
-		auto [s2,succ2]=node_itr2->second.edges.insert(make_pair(ind2,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(nodekey1,ind1,&(node_itr1->second))));
-		if(!succ2)throw key_exist_error("In network.set_edge, ind "+to_string(ind2)+" of node "+to_string(nodekey2)+" already linked!");
+		node_itr1->second.set_edge(ind1,nodekey2,ind2,&(node_itr2->second));
+		node_itr2->second.set_edge(ind2,nodekey1,ind1,&(node_itr1->second));
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::set_edge(network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it1,
 		network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it2, const EdgeKey & ind1,const EdgeKey& ind2){
 		
-		auto [s1,succ1]=it1->second.edges.insert(make_pair(ind1,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(it2->first,ind2,&(it2->second))));
-		if(!succ1)throw key_exist_error("In network.set_edge, ind "+to_string(ind1)+" of node "+to_string(it1->first)+" already linked!");
-		auto [s2,succ2]=it2->second.edges.insert(make_pair(ind2,edge<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>(it1->first,ind1,&(it1->second))));
-		if(!succ2)throw key_exist_error("In network.set_edge, ind "+to_string(ind2)+" of node "+to_string(it2->first)+" already linked!");
+		it1->second.set_edge(ind1,it2->first,ind2,&(it2->second));
+		it2->second.set_edge(ind2,it1->first,ind1,&(it1->second));
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -567,33 +516,8 @@ namespace net{
 			throw key_unfound_error("In network.absorb, node "+to_string(nodekey2)+" is not found!");
 		}
 
-		auto & node1=node_itr1->second;
-		auto & node2=node_itr2->second;
-
-		std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> ind_pairs;
-
-		// set ind_pairs and erase iterator in node1
-		for(auto iter=node1.edges.begin(); iter != node1.edges.end(); ) {
-			if (iter->second.nbkey==nodekey2) {
-				ind_pairs.insert(std::make_pair(iter->first,iter->second.nbind));
-				absorb_fun(node1.val,iter->second.val,iter->first);
-				iter=node1.edges.erase(iter);
-			} else {
-				++iter;
-			}
-		}
-
-		node1.val=contract_fun(node1.val,node2.val,ind_pairs);
-
-		for(auto & b:node2.edges){
-			if(b.second.nbkey != nodekey1){
-				node1.edges[b.first]=b.second;
-				auto &nb_edge =b.second.nbnode->edges[b.second.nbind];
-				nb_edge.nbkey=nodekey1;
-				nb_edge.nbnode=&node1;
-			}
-		}
-
+		node_itr1->second.absorb_nb(nodekey2,node_itr2->second.val,absorb_fun,contract_fun);
+		node_itr2->second.transfer_edge(nodekey1,&(node_itr1->second));
 		nodes.erase(node_itr2);
 	}
 
@@ -602,33 +526,8 @@ namespace net{
 		network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode node_itr2,
 		absorb_type<NodeVal,EdgeVal,EdgeKey> absorb_fun, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less> contract_fun){
 
-		auto & node1=node_itr1->second;
-		auto & node2=node_itr2->second;
-
-		std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> ind_pairs;
-
-		// set ind_pairs and erase iterator in node1
-		for(auto iter=node1.edges.begin(); iter != node1.edges.end(); ) {
-			if (iter->second.nbkey==node_itr2->first) {
-				ind_pairs.insert(std::make_pair(iter->first,iter->second.nbind));
-				absorb_fun(node1.val,iter->second.val,iter->first);
-				iter=node1.edges.erase(iter);
-			} else {
-				++iter;
-			}
-		}
-
-		node1.val=contract_fun(node1.val,node2.val,ind_pairs);
-
-		for(auto & b:node2.edges){
-			if(b.second.nbkey != node_itr1->first){
-				node1.edges[b.first]=b.second;
-				auto &nb_edge =b.second.nbnode->edges[b.second.nbind];
-				nb_edge.nbkey=node_itr1->first;
-				nb_edge.nbnode=&node1;
-			}
-		}
-
+		node_itr1->second.absorb_nb(node_itr2->first,node_itr2->second.val,absorb_fun,contract_fun);
+		node_itr2->second.transfer_edge(node_itr1->first,&(node_itr1->second));
 		nodes.erase(node_itr2);
 	}
 
@@ -728,7 +627,7 @@ namespace net{
 				//std::cout<<b.first<<b.second.name<<b.second.ind<<'\n';
 				if (group.count(b.second.nbkey)==1) {
 					ind_pairs.insert(std::make_pair(b.first,b.second.nbind));
-					absorb_fun(node_t,b.second.val,b.first);
+					node_t=absorb_fun(node_t,b.second.val,b.first);
 				}
 			}
 
@@ -752,7 +651,7 @@ namespace net{
 				//std::cout<<b.first<<b.second.name<<b.second.ind<<'\n';
 				if (group.count(b.second.nbkey)==1) {
 					ind_pairs.insert(std::make_pair(b.first,b.second.nbind));
-					absorb_fun(node_t,b.second.val,b.first);
+					node_t=absorb_fun(node_t,b.second.val,b.first);
 				}
 			}
 
@@ -777,7 +676,7 @@ namespace net{
 			for(auto & b:node.edges) {
 				if (group2.count(b.second.nbkey)==1) {
 					ind_pairs.insert(std::make_pair(b.first,b.second.ind));
-					absorb_fun(ten1,b.second.val,b.first);
+					ten1=absorb_fun(ten1,b.second.val,b.first);
 				}
 			}
 
@@ -815,6 +714,9 @@ namespace net{
 		for (auto & s:n.nodes){
 			const auto [its, success] = result.nodes.insert({f3(s.first),node<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>()});
 			its->second.val=f1(s.second.val);
+
+			// result.nodes[f3(s.first)]=node<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>();
+			// auto its=result.nodes[f3(s.first)];
 			for (auto & b:s.second.edges){
 				its->second.edges[f4(b.first)]=edge<NodeVal2,EdgeVal2,NodeKey,EdgeKey,Trait>
 					(f3(b.second.nbkey),f4(b.second.nbind),nullptr,f2(b.second.val));

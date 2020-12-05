@@ -3,6 +3,7 @@
 #include <string>
 #include <utility>
 #include <istream>
+#include <set>
 #include <ostream>
 #include "default_io.hpp"
 #include "default_bio.hpp"

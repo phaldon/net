@@ -142,8 +142,8 @@ std::string base64_encode(const std::string &in);
 		std::system("gwenview /tmp/net_tmp.png || eog /tmp/net_tmp.png");
 		std::cout<<"\x1B[31mPaused.\x1B[0m Please press enter to continue.\n";
 		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-#elif
-		std::cout<<"Method of showing the figure is invalid or unspecified!\n"
+#else
+		std::cout<<"Method of showing the figure is invalid or unspecified!\n";
 		std::cout<<"\x1B[31mPaused.\x1B[0m Please press enter to continue.\n";
 		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 #endif

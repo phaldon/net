@@ -7,7 +7,7 @@
 #include "timer.h"
 #include <TAT/TAT.hpp>
 #include <net/net.hpp>
-#include <net/tensor_tools.hpp>
+#include <net/tensor_network.hpp>
 #define str std::to_string
 #define vec std::vector
 
