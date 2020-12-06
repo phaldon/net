@@ -58,11 +58,8 @@ namespace net{
 			Trait::nodekey_read_text(is,a);
 			input_node_text(is,n.nodes[a]);
 		}
-		for(auto & s:n.nodes){
-			for (auto & b: s.second.edges){
-				b.second.nb_node=&(n.nodes[b.second.name]);
-			}
-		}
+		for(auto & s:n.nodes)
+			s.relink(n.nodes);
 		return is;
 	}
 
