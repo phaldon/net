@@ -3,7 +3,7 @@ CC=clang++
 
 TEST := \
 .timer.o\
-.prog2.o
+.prog.o
 
 TEST2 := \
 .test.o

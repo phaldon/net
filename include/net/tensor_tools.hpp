@@ -5,6 +5,7 @@
 #include <random>
 #include <variant>
 #include <functional>
+#include <iostream>
 #include "traits.hpp"
 #include <TAT/TAT.hpp>
 
@@ -21,6 +22,12 @@ namespace net{
 		template<typename T,typename EdgeKey=stdEdgeKey>
 		int get_dim(Tensor<T,EdgeKey> ten, EdgeKey s){
 			return ten.core->edges[ten.name_to_index[s]].map[TAT::NoSymmetry()];
+		}
+		template<typename T,typename EdgeKey=stdEdgeKey>
+		void diminfo(Tensor<T,EdgeKey> ten, std::ostream & os){
+			for(auto & s:ten.names)
+				os<<s<<' '<<ten.core->edges[ten.name_to_index[s]].map[TAT::NoSymmetry()]<<' ';
+			os<<'\n';
 		}
 
 		/**

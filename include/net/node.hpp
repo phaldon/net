@@ -24,19 +24,19 @@ namespace net{
     * \see node
     */
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
-	class edge{
-	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
-	friend std::ostream & output_edge_text(std::ostream &, const edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+	struct edge{
+	// template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	// friend std::ostream & output_edge_text(std::ostream &, const edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 
-	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
-	friend std::istream & input_edge_text(std::istream &, edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+	// template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	// friend std::istream & input_edge_text(std::istream &, edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 
-	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
-	friend std::ostream & output_edge_bin(std::ostream &, const edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+	// template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	// friend std::ostream & output_edge_bin(std::ostream &, const edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
 
-	template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
-	friend std::istream & input_edge_bin(std::istream &, edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
-	public:
+	// template<typename NodeVal1,typename EdgeVal1,typename NodeKey1, typename EdgeKey1, typename Trait1>	
+	// friend std::istream & input_edge_bin(std::istream &, edge<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &);
+	// public:
         /**
          * \brief 所指向的格点的名称
          */
@@ -117,7 +117,7 @@ namespace net{
 			contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less>);
 		template <typename Condition>
 		void harmless_absorb_nb(NodeVal &,absorb_type<NodeVal,EdgeVal,EdgeKey>, std::set<std::pair<EdgeKey,EdgeKey>,
-			typename Trait::edge2key_less>,Condition&&);
+			typename Trait::edge2key_less> &,Condition&&);
 
 		void transfer_edge(const NodeKey &,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> &,bool );
 		template <typename Condition>
@@ -129,7 +129,7 @@ namespace net{
 		void set_edge(const EdgeKey & ind,const NodeKey & nbkey, const EdgeKey & nbind,
 			node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * nbnode, const EdgeVal & edgev);
 
-		void relink(const std::map<NodeKey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> &);
+		void relink(std::map<NodeKey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> &);
 
 		bool consistency(const std::map<NodeKey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> &,std::ostream &);
 
@@ -210,10 +210,13 @@ namespace net{
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
 	template <typename Condition>
 	void node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::harmless_absorb_nb(NodeVal & thisval, absorb_type<NodeVal,EdgeVal,EdgeKey> absorb_fun,
-		std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> ind_pairs,Condition&& cond){
+		std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> & ind_pairs,Condition&& cond){
+
 
 		for(auto & b:edges) {
+			//std::cout<<"edge"<<b.first<<' '<<b.second.nbkey<<'\n';
 			if (cond(b)) {
+				//std::cout<<"edgehere"<<b.first<<' '<<b.second.nbkey<<'\n';
 				ind_pairs.insert(std::make_pair(b.first,b.second.nbind));
 				thisval=absorb_fun(thisval,b.second.val,b.first);
 			}
@@ -306,7 +309,7 @@ namespace net{
 	}
 
 	template <typename NodeVal, typename EdgeVal, typename NodeKey, typename EdgeKey, typename Trait>
-	void node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::relink(const std::map<NodeKey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> & nodes){
+	void node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::relink(std::map<NodeKey,node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>,typename Trait::nodekey_less> & nodes){
 		for (auto & b: edges)
 			b.second.nbnode=&(nodes[b.second.nbkey]);
 	}
@@ -353,10 +356,10 @@ namespace net{
 			if(nodes.count(b.second.nbkey)==0){
 				diagnosis<<"Network is not consistent, neighbor "+to_string(b.second.nbkey)+" is not found!\n";
 				return false;
-			}else if(nodes[b.second.nbkey].edges.count(b.second.nbind)==0){
+			}else if(nodes.at(b.second.nbkey).edges.count(b.second.nbind)==0){
 				diagnosis<<"Network is not consistent, neighbor "+to_string(b.second.nbkey)+" has no index named "+to_string(b.second.nbind)+" !\n";
 				return false;
-			}else if(b.second.nbnode != &(nodes[b.second.nbkey])){
+			}else if(b.second.nbnode != &(nodes.at(b.second.nbkey))){
 				diagnosis<<"Network is not consistent, pointer to neighbor "+to_string(b.second.nbkey)+" is not correctly pointed !\n";
 				return false;
 			}

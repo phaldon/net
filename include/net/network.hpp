@@ -12,6 +12,7 @@
 #include "error.hpp"
 #include "node.hpp"
 #include "traits.hpp"
+#include "tensor_tools.hpp"
 
 namespace net{
 
@@ -586,10 +587,8 @@ namespace net{
 		}else{
 			auto node_t=node_itr1->second.val;
 			std::set<std::pair<EdgeKey,EdgeKey>,typename Trait::edge2key_less> ind_pairs;
-
 			node_itr1->second.harmless_absorb_nb(node_t,absorb_fun,ind_pairs,
 				[&group](auto & eg){return group.count(eg.second.nbkey)==1;});
-
 			ten=contract_fun(node_t,ten,ind_pairs);
 		}
 	}
