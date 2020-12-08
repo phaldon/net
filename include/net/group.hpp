@@ -17,11 +17,8 @@
 namespace net{
 	template <typename NodeVal, typename EdgeVal, typename NodeKey=std::string, typename EdgeKey=stdEdgeKey,
 		typename Trait = default_traits<NodeVal,EdgeVal,NodeKey,EdgeKey> >
-	class group{
-	template <typename NodeVal1, typename EdgeVal1, typename NodeKey1, typename EdgeKey1,typename Trait1>
-	friend group<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> contract(group<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,typename Trait1::edge2key_less> &,
-		group<NodeVal1,EdgeVal1,NodeKey1,EdgeKey1,Trait1> &,absorb_type<NodeVal1,EdgeVal1,EdgeKey1>, contract_type<NodeVal1,EdgeKey1,typename Trait1::edge2key_less>);
-	public:
+	struct group{
+
 		//constructor
 		group()=default;
 		//copy constructor
@@ -40,7 +37,6 @@ namespace net{
 		void draw(const bool);
 		const NodeVal& get_val();
 
-	private:
 		network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> * net;
 		NodeVal val;
 		std::set<NodeKey,typename Trait::nodekey_less> contains;

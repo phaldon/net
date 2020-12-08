@@ -41,11 +41,18 @@ namespace net{
 	template <typename NodeVal,typename EdgeKey>
 	using init_node_type = std::function<NodeVal(const std::vector<EdgeKey> &)>;
 
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	using init_node_type_full = std::function<NodeVal(const node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> &)>;
+
 	/**
 	* \brief 边信息的初始化函数的类型
 	*/
 	template <typename EdgeVal,typename EdgeKey>
 	using init_edge_type = std::function<EdgeVal(const EdgeKey &,const EdgeKey &)>;
+
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
+	using init_edge_type_full = std::function<EdgeVal(const node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> &,
+		const node<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> &,const EdgeKey &,const EdgeKey &)>;
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey,typename EdgeKey>
 	struct default_traits;
@@ -235,10 +242,12 @@ namespace net{
 		* \brief 初始化网络的格点的信息
 		*/
 		void init_nodes(init_node_type<NodeVal,EdgeKey> );
+		void init_nodes(init_node_type_full<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> );
 		/**
 		* \brief 初始化网络的边的信息
 		*/
 		void init_edges(init_edge_type<EdgeVal,EdgeKey> );
+		void init_edges(init_edge_type_full<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> );
 		/**
 		* \brief 缩并整个网络
 		*/
@@ -308,13 +317,28 @@ namespace net{
 			node.second.val = init_fun(inds);
 		}
 	}
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>	
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::init_nodes(init_node_type_full<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> init_fun){
+
+		for (auto& node:nodes)
+			node.second.val = init_fun(node.second);
+	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
 	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::init_edges(init_edge_type<EdgeVal,EdgeKey> init_fun){
 
 		for (auto& node:nodes){
 			for (auto& b:node.second.edges){
-				b.second.val=init_fun(b.first,b.second.ind);
+				b.second.val=init_fun(b.first,b.second.nbind);
+			}
+		}
+	}
+	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>	
+	void network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::init_edges(init_edge_type_full<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait> init_fun){
+
+		for (auto& node:nodes){
+			for (auto& b:node.second.edges){
+				b.second.val=init_fun(node.second,b.second.nbitr->second,b.first,b.second.nbind);
 			}
 		}
 	}
@@ -467,8 +491,8 @@ namespace net{
 			throw key_unfound_error("In network.set_edge, node "+to_string(nodekey2)+" is not found!");
 		}
 
-		node_itr1->second.set_edge(ind1,nodekey2,ind2,&(node_itr2->second),edgeval);
-		node_itr2->second.set_edge(ind2,nodekey1,ind1,&(node_itr1->second),edgeval);
+		node_itr1->second.set_edge(ind1,nodekey2,ind2,node_itr2,edgeval);
+		node_itr2->second.set_edge(ind2,nodekey1,ind1,node_itr1,edgeval);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -476,8 +500,8 @@ namespace net{
 		network<NodeVal,EdgeVal,NodeKey,EdgeKey,Trait>::IterNode it2, const EdgeKey & ind1,const EdgeKey& ind2,
 		const EdgeVal& edgeval){
 		
-		it1->second.set_edge(ind1,it2->first,ind2,&(it2->second),edgeval);
-		it2->second.set_edge(ind2,it1->first,ind1,&(it1->second),edgeval);
+		it1->second.set_edge(ind1,it2->first,ind2,it2,edgeval);
+		it2->second.set_edge(ind2,it1->first,ind1,it1,edgeval);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
@@ -506,8 +530,7 @@ namespace net{
 		}
 
 		node_itr1->second.absorb_nb(nodekey2,node_itr2->second.val,absorb_fun,contract_fun);
-		node_itr2->second.transfer_edge(nodekey1,node_itr1->second,false,
-			[&nodekey1](auto & egitr){return egitr->second.nbkey!=nodekey1;});
+		node_itr2->second.transfer_edge(node_itr1,false,[&nodekey1](auto & egitr){return egitr->second.nbkey!=nodekey1;});
 		nodes.erase(node_itr2);
 	}
 
@@ -517,8 +540,7 @@ namespace net{
 		absorb_type<NodeVal,EdgeVal,EdgeKey> absorb_fun, contract_type<NodeVal,EdgeKey,typename Trait::edge2key_less> contract_fun){
 
 		node_itr1->second.absorb_nb(node_itr2->first,node_itr2->second.val,absorb_fun,contract_fun);
-		node_itr2->second.transfer_edge(node_itr1->first,node_itr1->second,false,
-			[&node_itr1](auto & egitr){return egitr->second.nbkey!=node_itr1->first;});
+		node_itr2->second.transfer_edge(node_itr1,false,[&node_itr1](auto & egitr){return egitr->second.nbkey!=node_itr1->first;});
 		nodes.erase(node_itr2);
 	}
 
@@ -531,13 +553,12 @@ namespace net{
 		auto [s2,succ2]=nodes.insert(nodekey2);
 		auto [s3,succ3]=nodes.insert(nodekey3);
 
-		s1->second.transfer_edge(nodekey2,s2->second,nodekey3,s3->second,false,
-			[&inds](auto & egitr){return inds.count(egitr->first)==0;});
+		s1->second.transfer_edge(s2,s3,false,[&inds](auto & egitr){return inds.count(egitr->first)==0;});
 
 		EdgeVal env;
 		dec_fun(s1->val,s2->val,s3->val,inds,ind2,ind3,env);
-		s2->second.set_edge(ind2,nodekey3,ind3,&(s3->second),env);
-		s3->second.set_edge(ind3,nodekey2,ind2,&(s2->second),env);
+		s2->second.set_edge(ind2,nodekey3,ind3,s3,env);
+		s3->second.set_edge(ind3,nodekey2,ind2,s2,env);
 		nodes.erase(s1);
 	}
 
@@ -549,14 +570,13 @@ namespace net{
 		auto s1=nodes.find(nodekey1);
 		auto [s2,succ2]=nodes.insert(nodekey2);
 
-		s1->second.transfer_edge(nodekey2,s2->second,true,
-			[&inds](auto & egitr){return inds.count(egitr->first)==1;});
+		s1->second.transfer_edge(s2,true,[&inds](auto & egitr){return inds.count(egitr->first)==1;});
 
 		auto temp=s1->val;
 		EdgeVal env;
 		dec_fun(temp,s1->val,s2->val,inds,ind1,ind2,env);
-		s1->second.set_edge(ind1,nodekey2,ind2,&(s2->second),env);
-		s2->second.set_edge(ind2,nodekey1,ind1,&(s1->second),env);
+		s1->second.set_edge(ind1,nodekey2,ind2,s2,env);
+		s2->second.set_edge(ind2,nodekey1,ind1,s1,env);
 	}
 
 	template<typename NodeVal,typename EdgeVal,typename NodeKey, typename EdgeKey, typename Trait>
